@@ -13,6 +13,7 @@ function TicketForm({ onNavigate, params = {} }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [ticketId, setTicketId] = useState(null)
+  const [ticketToken, setTicketToken] = useState(null)
   const [aiFilledFields, setAiFilledFields] = useState(new Set())
   const [aiSelectedCategory, setAiSelectedCategory] = useState(null)
   const [showCategoryWarning, setShowCategoryWarning] = useState(false)
@@ -74,6 +75,7 @@ function TicketForm({ onNavigate, params = {} }) {
     setShowSuccess(false)
     setFiles([])
     setTicketId(null)
+    setTicketToken(null)
     setErrors({})
     setIsSubmitting(false)
     setShowCategoryWarning(false)
@@ -278,10 +280,22 @@ function TicketForm({ onNavigate, params = {} }) {
 
     setTimeout(() => {
       const randomId = 'TK-' + Math.floor(Math.random() * 100000)
+      // Генерация токена в стиле случайной строки (32 символа)
+      const generateToken = () => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+        let token = ''
+        for (let i = 0; i < 32; i++) {
+          token += chars.charAt(Math.floor(Math.random() * chars.length))
+        }
+        return token
+      }
+      const token = generateToken()
       setTicketId(randomId)
+      setTicketToken(token)
 
       const ticketData = {
         id: randomId,
+        token: token,
         category: selectedCategory,
         formData: { ...formData },
         attachments: files.map(f => ({
@@ -486,21 +500,49 @@ function TicketForm({ onNavigate, params = {} }) {
   }
 
   if (showSuccess) {
+    const userEmail = formData.email || 'указанный вами email'
+    
     return (
-      <div className="p-4 flex flex-col items-center justify-center min-h-[400px] animate-in fade-in">
+      <div className="p-3 md:p-4 flex flex-col items-center justify-center min-h-[400px] animate-in fade-in">
         <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Тикет создан!</h2>
-        <p className="text-gray-600 text-center mb-6">
-          Ваш номер обращения: <span className="font-semibold">{ticketId}</span>
-          <br />
-          Мы ответим вам в течение 24 часов.
-        </p>
+        <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 text-center">Тикет создан!</h2>
+        <div className="w-full max-w-md space-y-4 mb-6">
+          <div className="bg-gray-50 rounded-lg p-4">
+            <p className="text-gray-700 text-center mb-2">
+              Ваш номер обращения: <span className="font-semibold">{ticketId}</span>
+            </p>
+            <p className="text-sm text-gray-600 text-center">
+              Мы ответим вам в течение 24 часов.
+            </p>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm font-medium text-blue-900 mb-2">
+              Информация о тикете отправлена на почту
+            </p>
+            <p className="text-xs text-blue-800">
+              Письмо с информацией о тикете отправлено на <span className="font-semibold">{userEmail}</span>
+            </p>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-4">
+            <p className="text-sm text-gray-700 mb-2">
+              <span className="font-semibold">Важно:</span>
+            </p>
+            <ul className="text-xs text-gray-600 space-y-1 list-disc list-inside">
+              <li>Ответ саппорта поступит на вашу почту <span className="font-semibold">{userEmail}</span></li>
+              <li>Дальнейшее общение по тикету будет происходить в почте</li>
+              <li>Проверьте папку "Спам", если письмо не пришло</li>
+            </ul>
+          </div>
+        </div>
         <button
           onClick={() => {
             setShowSuccess(false)
             setFormData({})
             setFiles([])
             setTicketId(null)
+            setTicketToken(null)
             onNavigate('HOME')
           }}
           className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
