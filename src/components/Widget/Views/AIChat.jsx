@@ -126,7 +126,7 @@ function AIChat({ onNavigate, params = {} }) {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-3 md:p-4">
       {!aiResponse ? (
         <form onSubmit={handleSubmit}>
           <div className="mb-4">

@@ -60,11 +60,11 @@ function ArticleView({ article, onNavigate, params = {} }) {
   }
 
   return (
-    <div className="p-4" ref={contentRef}>
+    <div className="p-3 md:p-4" ref={contentRef}>
       <div 
         className={`mb-6 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
       >
-        <h1 className="text-2xl font-bold text-gray-900 mb-3">{article.title}</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">{article.title}</h1>
         <div 
           className="prose max-w-none text-gray-700 leading-relaxed"
           dangerouslySetInnerHTML={{ __html: article.content }}
@@ -74,7 +74,7 @@ function ArticleView({ article, onNavigate, params = {} }) {
       {/* Related Articles Block */}
       {relatedArticles.length > 0 && (
         <div className="mt-6 pt-6 border-t border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Другие результаты по вашему запросу</h2>
+          <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-3">Другие результаты по вашему запросу</h2>
           <div className="space-y-2">
             {relatedArticles.map((relatedArticle) => (
               <div

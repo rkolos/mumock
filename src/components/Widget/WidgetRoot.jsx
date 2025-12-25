@@ -54,7 +54,7 @@ function WidgetRoot({ isOpen, onClose }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed bottom-4 right-4 w-[380px] h-[600px] z-[1000] transition-all duration-300 ease-out">
+    <div className="fixed inset-0 md:inset-auto md:bottom-4 md:right-4 md:w-[380px] md:h-[600px] z-[1000] transition-all duration-300 ease-out">
       <Layout
         title={viewConfig.title}
         showBackButton={showBackButton}

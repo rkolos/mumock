@@ -13,8 +13,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto p-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">
+      <div className="container mx-auto p-4 md:p-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
           Support Widget Demo
         </h1>
         <p className="text-gray-600 mb-4">
@@ -33,7 +33,7 @@ function App() {
       {!isWidgetOpen && (
         <button
           onClick={toggleWidget}
-          className="fixed bottom-4 right-4 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all z-[999] flex items-center justify-center text-white"
+          className="fixed bottom-4 right-4 md:bottom-4 md:right-4 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all z-[999] flex items-center justify-center text-white"
           style={{ backgroundColor: primaryColor }}
           aria-label="Открыть виджет поддержки"
         >

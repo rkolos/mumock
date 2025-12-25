@@ -514,7 +514,7 @@ function TicketForm({ onNavigate, params = {} }) {
   const categoryFields = categories[selectedCategory]?.fields || []
 
   return (
-    <div className="p-4">
+    <div className="p-3 md:p-4">
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Категория */}
         <div>
