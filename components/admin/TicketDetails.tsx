@@ -143,7 +143,9 @@ export default function TicketDetails({ ticketId }: TicketDetailsProps) {
                   <div>
                     <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
                       Environment
-                      <Bot className="h-4 w-4 text-blue-600" title="Заполнено ИИ" />
+                      <span title="Заполнено ИИ">
+                        <Bot className="h-4 w-4 text-blue-600" />
+                      </span>
                     </label>
                     <p className="text-gray-900 bg-gray-50 p-2 rounded border">
                       {ticket.environment}
@@ -154,7 +156,9 @@ export default function TicketDetails({ ticketId }: TicketDetailsProps) {
                   <div>
                     <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
                       Error Logs
-                      <Bot className="h-4 w-4 text-blue-600" title="Заполнено ИИ" />
+                      <span title="Заполнено ИИ">
+                        <Bot className="h-4 w-4 text-blue-600" />
+                      </span>
                     </label>
                     <pre className="text-sm text-gray-900 bg-gray-50 p-3 rounded border overflow-x-auto">
                       {ticket.errorLogs}
