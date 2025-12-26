@@ -121,7 +121,9 @@ export default function TicketDetails({ ticketId }: TicketDetailsProps) {
                 <div>
                   <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
                     Transaction ID
-                    <Bot className="h-4 w-4 text-blue-600" title="Заполнено ИИ" />
+                    <span title="Заполнено ИИ">
+                      <Bot className="h-4 w-4 text-blue-600" />
+                    </span>
                   </label>
                   <p className="text-gray-900 font-mono bg-gray-50 p-2 rounded border">
                     {ticket.transactionId}
