@@ -1,9 +1,9 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import Sidebar from '../../../../components/admin/Sidebar'
-import Header from '../../../../components/admin/Header'
-import TicketDetails from '../../../../components/admin/TicketDetails'
+import Sidebar from '../../../components/admin/Sidebar'
+import Header from '../../../components/admin/Header'
+import TicketDetails from '../../../components/admin/TicketDetails'
 import { useState } from 'react'
 
 export default function TicketPage() {
