@@ -15,9 +15,10 @@ import {
   Settings,
   X,
   User,
+  ChevronDown,
 } from 'lucide-react'
 import { useWidget } from '../../contexts/WidgetContext'
-import { useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 interface SidebarProps {
   isOpen: boolean
@@ -28,6 +29,7 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps) {
   const pathname = usePathname()
   const { setCurrentSection } = useWidget()
+  const [organizationDropdownOpen, setOrganizationDropdownOpen] = useState(false)
 
   // Обновляем текущий раздел при изменении pathname
   useEffect(() => {
@@ -54,6 +56,25 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
     onLinkClick?.()
   }
 
+  const organizationDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Закрытие dropdown при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        organizationDropdownRef.current &&
+        !organizationDropdownRef.current.contains(event.target as Node)
+      ) {
+        setOrganizationDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
   const navItems = {
     main: [
       { name: 'Tickets', href: '/', icon: UserCog },
@@ -68,6 +89,9 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       { name: 'Migration', href: '/migration', icon: ArrowLeftRight },
     ],
   }
+
+  const organizations = ['TEST', 'Production', 'Development']
+  const [currentOrganization] = useState('TEST')
 
   return (
     <>
@@ -90,19 +114,52 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
         `}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 bg-blue-600 rounded flex items-center justify-center">
-              <Ticket className="h-5 w-5 text-white" />
+        <div className="p-4 border-b border-slate-700">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 bg-blue-600 rounded flex items-center justify-center">
+                <Ticket className="h-5 w-5 text-white" />
+              </div>
+              <span className="font-bold text-lg">NinjaTickets</span>
             </div>
-            <span className="font-bold text-lg">NinjaTickets</span>
+            <button
+              onClick={onToggle}
+              className="lg:hidden p-1 hover:bg-slate-700 rounded"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <button
-            onClick={onToggle}
-            className="lg:hidden p-1 hover:bg-slate-700 rounded"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          
+          {/* Organization Switcher */}
+          <div className="relative" ref={organizationDropdownRef}>
+            <button
+              onClick={() => setOrganizationDropdownOpen(!organizationDropdownOpen)}
+              className="w-full flex items-center justify-between px-3 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-md transition-colors text-left"
+            >
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400">Organization</span>
+                <span className="text-sm font-medium text-white">{currentOrganization}</span>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${organizationDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {organizationDropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-md shadow-lg z-10">
+                {organizations.map((org) => (
+                  <button
+                    key={org}
+                    onClick={() => {
+                      setOrganizationDropdownOpen(false)
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-700 first:rounded-t-md last:rounded-b-md ${
+                      org === currentOrganization ? 'bg-slate-700 text-white' : 'text-slate-300'
+                    }`}
+                  >
+                    {org}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Navigation */}
