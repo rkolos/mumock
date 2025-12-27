@@ -33,6 +33,11 @@ import {
   MessageCircle,
   Globe,
   Sparkles,
+  FileText,
+  Video,
+  Download,
+  Play,
+  Image as ImageIcon,
 } from 'lucide-react'
 import { mockTickets, Ticket } from '../../data/tickets'
 import { mockTags } from '../../data/tags'
@@ -53,6 +58,17 @@ interface Message {
     content: string
   }
   attachments?: string[]
+  images?: string[]
+  files?: Array<{
+    name: string
+    size: string
+    type: 'pdf' | 'zip' | 'log' | 'doc' | 'other'
+    url?: string
+  }>
+  video?: {
+    url: string
+    thumbnail?: string
+  }
 }
 
 interface TicketViewProps {
@@ -199,22 +215,33 @@ export default function TicketView({ ticketId }: TicketViewProps) {
       id: '4',
       author: ticket.username,
       authorId: 'user',
-      content: 'Можете помочь?',
+      content: 'Вот скриншоты ошибки, как вы и просили. Она появляется сразу после логина.',
       timestamp: '2025-12-15T10:15:00Z',
       isSystem: false,
-      replyTo: {
-        author: ticket.username,
-        content: 'Здравствуйте! У меня проблема с оплатой.',
-      },
+      images: [
+        'https://placehold.co/400x300/FF6B6B/FFFFFF?text=Error+Screen',
+        'https://placehold.co/400x300/4ECDC4/FFFFFF?text=Error+Log',
+      ],
     },
     {
       id: '5',
       author: 'admin@example.com',
       authorId: 'admin',
-      content: 'Конечно! Расскажите подробнее о проблеме.',
+      content: 'Я проанализировал логи. Похоже на конфликт драйверов.\nПосмотрите это видео-руководство, а затем установите патч ниже.',
       timestamp: '2025-12-15T10:20:00Z',
       isSystem: false,
       edited: true,
+      video: {
+        url: 'https://example.com/video.mp4',
+        thumbnail: 'https://placehold.co/600x400/2C3E50/FFFFFF?text=Video+Preview',
+      },
+      files: [
+        {
+          name: 'patch_v2.4_fix.zip',
+          size: '4.2 MB',
+          type: 'zip',
+        },
+      ],
     },
     {
       id: '6',
@@ -223,7 +250,6 @@ export default function TicketView({ ticketId }: TicketViewProps) {
       content: 'Спасибо за помощь!',
       timestamp: '2025-12-15T10:25:00Z',
       isSystem: false,
-      attachments: ['image1.jpg', 'image2.jpg'],
     },
   ]
 
@@ -606,13 +632,13 @@ export default function TicketView({ ticketId }: TicketViewProps) {
           style={{ width: '275px', minWidth: '250px', maxWidth: '300px' }}
         >
           {/* Поиск */}
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4 border-b border-[#F0F0F0]">
             <div className="relative" ref={searchSettingsRef}>
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#9E9E9E]" />
               <input
                 type="text"
                 placeholder="Search tickets"
-                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-10 py-2 bg-[#FAFAFA] border border-[#E0E0E0] rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 onClick={(e) => {
@@ -621,7 +647,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                 }}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
               >
-                <Settings className="h-4 w-4 text-gray-400" />
+                <Settings className="h-4 w-4 text-[#9E9E9E]" />
               </button>
               
               {/* Search Settings Popover */}
@@ -690,15 +716,16 @@ export default function TicketView({ ticketId }: TicketViewProps) {
           </div>
 
           {/* Фильтры */}
-          <div className="px-4 py-3 border-b border-gray-200 relative" ref={filterMenuRef}>
+          <div className="px-4 py-2 border-b border-[#F0F0F0] relative" ref={filterMenuRef}>
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 setFilterMenuOpen(!filterMenuOpen)
               }}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors"
+              className="flex items-center gap-2 text-[11px] font-bold text-[#757575] uppercase hover:text-[#424242] transition-colors"
+              style={{ letterSpacing: '0.5px' }}
             >
-              <Filter className="h-4 w-4" />
+              <Filter className="h-3.5 w-3.5" />
               <span>Add Filter</span>
             </button>
             
@@ -748,6 +775,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
               const ticketAiTitle = getAiTitle(t)
               const TicketSourceIcon = getSourceIcon(t.source)
               const ticketWaitTime = formatWaitTime(t.waitTimeHours)
+              const waitTimeColor = t.waitTimeHours && t.waitTimeHours >= 4 ? '#D32F2F' : '#757575'
               return (
                 <div
                   key={t.id}
@@ -756,9 +784,9 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                     router.push(`/tickets/${t.id}`)
                   }}
                   className={`
-                    flex items-start gap-3 py-2 px-3 border-b border-gray-100 cursor-pointer
-                    hover:bg-gray-50 transition-colors relative
-                    ${isActive ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}
+                    flex items-start gap-3 py-3 px-4 border-b border-[#F0F0F0] cursor-pointer
+                    hover:bg-[#F5F7FB] transition-colors relative
+                    ${isActive ? 'bg-[#F0F4FF] border-l-[3px] border-l-[#1976D2]' : ''}
                   `}
                 >
                   {/* Аватар с badge источника */}
@@ -770,7 +798,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                     </div>
                     {/* Badge источника с белой обводкой */}
                     {t.source && (
-                      <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-white flex items-center justify-center border-2 border-white">
+                      <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-white flex items-center justify-center" style={{ border: '2px solid white' }}>
                         <TicketSourceIcon className={`h-2.5 w-2.5 ${getSourceIconColor(t.source)}`} />
                       </div>
                     )}
@@ -779,40 +807,34 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                   {/* Контентная часть */}
                   <div className="flex-1 min-w-0 flex flex-col">
                     {/* Ряд 1: AI Title (с переносом) */}
-                    <div className="text-sm font-semibold text-gray-900 leading-tight mb-1">
-                      {ticketAiTitle}
+                    <div className="text-[13px] font-semibold text-[#212121] mb-1" style={{ lineHeight: '1.3' }}>
+                      <div className="line-clamp-2">{ticketAiTitle}</div>
                     </div>
                     
                     {/* Ряд 2: User Name + Wait Time */}
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1.5">
-                      <span>@{t.username}</span>
+                    <div className="flex items-center gap-1 text-[12px] font-normal text-[#757575] mb-1.5">
+                      <span className="font-medium">@{t.username}</span>
                       {ticketWaitTime && (
                         <>
                           <span>•</span>
-                          <span
-                            className={`${getWaitTimeColor(t.waitTimeHours)} ${
-                              t.waitTimeHours && t.waitTimeHours >= 4
-                                ? 'px-1.5 py-0.5 rounded bg-red-50'
-                                : ''
-                            }`}
-                          >
-                            ⏳ {ticketWaitTime}
+                          <span style={{ color: waitTimeColor }}>
+                            Wait: {ticketWaitTime}
                           </span>
                         </>
                       )}
                     </div>
                     
                     {/* Ряд 3: Footer - Category (слева) + Status (справа) */}
-                    <div className="flex items-center justify-between mt-auto">
+                    <div className="flex items-center justify-between mt-1.5">
                       {/* Категория */}
-                      <span className="text-[11px] text-gray-600 px-2 py-0.5 border border-gray-300 rounded bg-gray-50">
-                        {t.category}
+                      <span className="text-[11px] font-bold text-[#9E9E9E] uppercase" style={{ letterSpacing: '0.5px' }}>
+                        {t.category === 'Financial' ? 'BILLING' : t.category.toUpperCase()}
                       </span>
                       
                       {/* Статус */}
                       <div className="flex items-center gap-1.5">
-                        <div className={`h-2 w-2 rounded-full ${getStatusColor(t.status)}`}></div>
-                        <span className="text-[11px] text-gray-600">{getStatusLabel(t.status)}</span>
+                        <div className={`h-1.5 w-1.5 rounded-full ${getStatusColor(t.status)}`}></div>
+                        <span className="text-[12px] font-medium text-[#424242]">{getStatusLabel(t.status)}</span>
                       </div>
                     </div>
                   </div>
@@ -848,6 +870,11 @@ export default function TicketView({ ticketId }: TicketViewProps) {
 
               // Определяем, нужно ли показывать аватар (группировка сообщений)
               const prevMessage = index > 0 ? messages[index - 1] : null
+              const isSameAuthor = prevMessage && 
+                !prevMessage.isSystem && 
+                !message.isSystem && 
+                prevMessage.authorId === message.authorId &&
+                formatDate(prevMessage.timestamp) === formatDate(message.timestamp)
               const showAvatar =
                 !message.isSystem &&
                 (!prevMessage ||
@@ -868,7 +895,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                         <div className="flex-1 h-px bg-gray-300"></div>
                       </div>
                     )}
-                    <div className="flex justify-center my-2">
+                    <div className="flex justify-center my-6">
                       <span className="text-xs text-gray-500">
                         — {message.content} {formatSystemDate(message.timestamp)} в {formatTime(message.timestamp)} —
                       </span>
@@ -890,15 +917,15 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                   )}
 
                   <div
-                    className={`group flex items-start gap-3 py-1 hover:bg-gray-50/50 rounded transition-colors ${
+                    className={`group flex items-end gap-2 ${
                       message.authorId === 'admin' ? 'flex-row-reverse' : ''
-                    }`}
+                    } ${isSameAuthor ? 'mt-1' : 'mt-4'}`}
                   >
                     {/* Аватар (показываем только для первого сообщения в группе) */}
-                    <div className="w-10 flex-shrink-0">
+                    <div className="w-8 flex-shrink-0">
                       {showAvatar && (
-                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                          <span className="text-sm font-medium text-gray-600">
+                        <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                          <span className="text-xs font-medium text-gray-600">
                             {message.author.charAt(0).toUpperCase()}
                           </span>
                         </div>
@@ -906,20 +933,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                     </div>
 
                     {/* Контент сообщения */}
-                    <div className={`flex-1 min-w-0 ${message.authorId === 'admin' ? 'flex flex-col items-end' : ''}`}>
-                      {/* Заголовок сообщения (только для пользователей, не для агента) */}
-                      {showAvatar && message.authorId !== 'admin' && (
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-medium text-gray-700">
-                            {message.author}
-                          </span>
-                          <span className="text-xs text-gray-500">{formatTime(message.timestamp)}</span>
-                          {message.edited && (
-                            <span className="text-xs text-gray-400 italic">(edited)</span>
-                          )}
-                        </div>
-                      )}
-
+                    <div className={`flex-1 min-w-0 ${message.authorId === 'admin' ? 'flex flex-col items-end' : ''}`} style={{ maxWidth: '65%' }}>
                       {/* Reply Preview */}
                       {message.replyTo && (
                         <div className={`mb-2 pl-4 border-l-4 border-blue-500 text-sm text-gray-600 ${message.authorId === 'admin' ? 'pr-4 border-l-0 border-r-4' : ''}`}>
@@ -928,52 +942,152 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                         </div>
                       )}
 
-                      {/* Текст сообщения */}
+                      {/* Пузырь сообщения */}
                       <div
-                        className={`text-sm px-3 py-2 rounded-lg relative inline-block ${
+                        className={`px-3 py-2 relative inline-block ${
                           message.authorId === 'user'
-                            ? 'bg-white text-gray-700'
+                            ? 'bg-white text-[#212121] shadow-sm'
                             : message.authorId === 'admin'
-                            ? 'bg-blue-50 text-gray-700'
-                            : 'bg-white text-gray-700'
+                            ? 'bg-blue-50 text-[#212121]'
+                            : 'bg-white text-[#212121] shadow-sm'
                         }`}
+                        style={{
+                          borderRadius: message.authorId === 'user' 
+                            ? '12px 12px 12px 0' 
+                            : message.authorId === 'admin'
+                            ? '12px 12px 0 12px'
+                            : '12px',
+                        }}
                       >
-                        {message.content}
-                        {/* Время и edited для агента внутри пузыря */}
-                        {message.authorId === 'admin' && (
-                          <div className="flex items-center gap-1.5 mt-1 justify-end">
-                            {message.edited && (
-                              <span className="text-xs text-gray-500 italic">(edited)</span>
-                            )}
-                            <span className="text-xs text-gray-500">{formatTime(message.timestamp)}</span>
+                        {/* Текст сообщения */}
+                        {message.content && (
+                          <div 
+                            className="text-[14px] mb-2 whitespace-pre-wrap"
+                            style={{ lineHeight: '1.45' }}
+                          >
+                            {message.content}
                           </div>
                         )}
-                        {/* Время и edited для пользователя (если не в заголовке) */}
-                        {message.authorId === 'user' && !showAvatar && (
-                          <div className="flex items-center gap-1.5 mt-1">
-                            {message.edited && (
-                              <span className="text-xs text-gray-400 italic">(edited)</span>
-                            )}
-                            <span className="text-xs text-gray-400">{formatTime(message.timestamp)}</span>
-                          </div>
-                        )}
-                      </div>
 
-                      {/* Attachments */}
-                      {message.attachments && message.attachments.length > 0 && (
-                        <div className={`grid grid-cols-2 gap-2 mt-2 ${message.authorId === 'admin' ? 'ml-auto' : ''} max-w-md`}>
-                          {message.attachments.map((att, idx) => (
-                            <div
-                              key={idx}
-                              className="aspect-video bg-gray-200 rounded border border-gray-300 flex items-center justify-center overflow-hidden"
-                            >
-                              <span className="text-xs text-gray-500 truncate px-2">
-                                {att}
-                              </span>
+                        {/* Изображения / Галерея */}
+                        {message.images && message.images.length > 0 && (
+                          <div className={`mb-2 ${message.images.length > 1 ? 'grid grid-cols-2 gap-1' : ''}`}>
+                            {message.images.map((img, idx) => (
+                              <div
+                                key={idx}
+                                className="relative rounded-lg overflow-hidden cursor-zoom-in"
+                                style={{ 
+                                  maxWidth: message.images.length === 1 ? '300px' : '100%',
+                                  maxHeight: '300px',
+                                }}
+                              >
+                                <img
+                                  src={img}
+                                  alt={`Image ${idx + 1}`}
+                                  className="w-full h-full object-cover"
+                                  style={{ borderRadius: '8px' }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Видео */}
+                        {message.video && (
+                          <div className="mb-2 relative rounded-lg overflow-hidden bg-black" style={{ aspectRatio: '16/9', maxWidth: '100%' }}>
+                            <img
+                              src={message.video.thumbnail || message.video.url}
+                              alt="Video thumbnail"
+                              className="w-full h-full object-cover opacity-70"
+                              style={{ borderRadius: '8px' }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="bg-white/20 rounded-full p-3 backdrop-blur-sm">
+                                <Play className="h-12 w-12 text-white" fill="white" />
+                              </div>
                             </div>
-                          ))}
+                          </div>
+                        )}
+
+                        {/* Файлы */}
+                        {message.files && message.files.length > 0 && (
+                          <div className="mb-2 space-y-1">
+                            {message.files.map((file, idx) => {
+                              const getFileIcon = () => {
+                                switch (file.type) {
+                                  case 'pdf':
+                                    return <FileText className="h-6 w-6 text-white" />
+                                  case 'zip':
+                                    return <FileText className="h-6 w-6 text-white" />
+                                  case 'log':
+                                    return <FileText className="h-6 w-6 text-white" />
+                                  default:
+                                    return <FileText className="h-6 w-6 text-white" />
+                                }
+                              }
+                              const getFileColor = () => {
+                                switch (file.type) {
+                                  case 'pdf':
+                                    return 'bg-red-500'
+                                  case 'zip':
+                                    return 'bg-blue-500'
+                                  case 'log':
+                                    return 'bg-gray-600'
+                                  default:
+                                    return 'bg-gray-500'
+                                }
+                              }
+                              return (
+                                <div
+                                  key={idx}
+                                  className="flex items-center gap-2 bg-[#F5F5F5] border border-[#E0E0E0] rounded-lg p-2"
+                                >
+                                  <div className={`${getFileColor()} rounded p-1.5 flex-shrink-0`}>
+                                    {getFileIcon()}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-[13px] font-medium text-[#212121] truncate">
+                                      {file.name}
+                                    </div>
+                                    <div className="text-[10px] text-[#9E9E9E]">
+                                      {file.size}
+                                    </div>
+                                  </div>
+                                  <button className="p-1 hover:bg-gray-200 rounded transition-colors flex-shrink-0">
+                                    <Download className="h-4 w-4 text-[#757575]" />
+                                  </button>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        {/* Старые attachments (для обратной совместимости) */}
+                        {message.attachments && message.attachments.length > 0 && !message.images && (
+                          <div className={`grid grid-cols-2 gap-2 mb-2`}>
+                            {message.attachments.map((att, idx) => (
+                              <div
+                                key={idx}
+                                className="aspect-video bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center overflow-hidden"
+                              >
+                                <span className="text-xs text-gray-500 truncate px-2">
+                                  {att}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Мета-данные (Timestamp) */}
+                        <div className={`flex items-center gap-1.5 ${message.authorId === 'admin' ? 'justify-end' : ''}`}>
+                          {message.edited && (
+                            <span className="text-[11px] italic" style={{ color: 'rgba(0,0,0,0.45)' }}>(edited)</span>
+                          )}
+                          <span className="text-[11px]" style={{ color: 'rgba(0,0,0,0.45)' }}>
+                            {formatTime(message.timestamp)}
+                          </span>
                         </div>
-                      )}
+                      </div>
 
                       {/* Hover Menu */}
                       <div className={`opacity-0 group-hover:opacity-100 flex items-center gap-1 mt-1 transition-opacity ${message.authorId === 'admin' ? 'flex-row-reverse' : ''}`}>
@@ -1122,25 +1236,25 @@ export default function TicketView({ ticketId }: TicketViewProps) {
           className="bg-white border-l border-gray-200 overflow-y-auto"
           style={{ width: '310px', minWidth: '300px', maxWidth: '320px' }}
         >
-          <div className="p-4 space-y-4">
+          <div className="p-4">
             {/* Карточка пользователя */}
-            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+            <div className="group flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors mb-6">
               <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
                 <span className="text-sm font-medium text-gray-600">
                   {ticket.username.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-sm text-gray-900 truncate">
+                <div className="text-sm font-bold text-gray-900 truncate">
                   {ticket.username
                     .split('_')
                     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
                     .join(' ')}
                 </div>
-                <div className="text-xs text-gray-500 truncate">@{ticket.username}</div>
+                <div className="text-xs font-normal text-gray-500 truncate">@{ticket.username}</div>
               </div>
               <button
-                className="p-1.5 hover:bg-gray-200 rounded transition-colors"
+                className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-200 rounded transition-all"
                 title="Скопировать ID"
               >
                 <Copy className="h-4 w-4 text-gray-400" />
@@ -1148,46 +1262,58 @@ export default function TicketView({ ticketId }: TicketViewProps) {
             </div>
 
             {/* Секция "Свойства" */}
-            <div className="space-y-3">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Source</div>
-                <div className="flex items-center gap-2">
-                  {ticket.source && (
-                    <>
-                      <SourceIcon className={`h-4 w-4 ${getSourceIconColor(ticket.source)}`} />
-                      <span className="text-sm text-gray-900 font-medium">
-                        {getSourceName(ticket.source, ticket.channel)}
-                      </span>
-                    </>
-                  )}
-                  {!ticket.source && (
-                    <span className="text-sm text-gray-900 font-medium">Unknown</span>
-                  )}
+            <div className="mb-6">
+              <div className="text-[11px] font-bold text-[#9E9E9E] uppercase mb-2" style={{ letterSpacing: '0.5px' }}>
+                Properties
+              </div>
+              <div className="space-y-1">
+                <div className="grid grid-cols-[40%_60%] gap-2 items-start">
+                  <div className="text-[13px] font-normal text-[#757575]">Source:</div>
+                  <div className="flex items-center gap-2">
+                    {ticket.source && (
+                      <>
+                        <SourceIcon className={`h-4 w-4 ${getSourceIconColor(ticket.source)}`} />
+                        <span className="text-[13px] font-medium text-[#212121]" style={{ wordBreak: 'break-word' }}>
+                          {getSourceName(ticket.source, ticket.channel)}
+                        </span>
+                      </>
+                    )}
+                    {!ticket.source && (
+                      <span className="text-[13px] font-medium text-[#212121]">Unknown</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Created</div>
-                <div className="text-sm text-gray-900 font-medium">{formatDate(ticket.createdAt)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Channel</div>
-                <button className="text-sm text-gray-900 font-medium hover:text-blue-600 hover:underline transition-colors">
-                  {ticket.channel}
-                </button>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Category</div>
-                <button className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded hover:bg-blue-200 transition-colors">
-                  {ticket.category === 'Financial' ? 'IMPORTANT' : ticket.category.toUpperCase()}
-                </button>
+                <div className="grid grid-cols-[40%_60%] gap-2 items-start">
+                  <div className="text-[13px] font-normal text-[#757575]">Created:</div>
+                  <div className="text-[13px] font-medium text-[#212121]">{formatDate(ticket.createdAt)}</div>
+                </div>
+                <div className="grid grid-cols-[40%_60%] gap-2 items-start">
+                  <div className="text-[13px] font-normal text-[#757575]">Channel:</div>
+                  <a
+                    href="#"
+                    className="text-[13px] font-medium text-[#1976D2] hover:underline inline-flex items-center gap-1"
+                    style={{ wordBreak: 'break-word' }}
+                  >
+                    <span className="truncate">{ticket.channel}</span>
+                    <ExternalLink className="h-3 w-3 flex-shrink-0 text-gray-500" />
+                  </a>
+                </div>
+                <div className="grid grid-cols-[40%_60%] gap-2 items-start">
+                  <div className="text-[13px] font-normal text-[#757575]">Category:</div>
+                  <button className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded hover:bg-blue-200 transition-colors w-fit">
+                    {ticket.category === 'Financial' ? 'IMPORTANT' : ticket.category.toUpperCase()}
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* Секция "Source Data" */}
             {ticket.custom_fields && ticket.custom_fields.length > 0 && (
-              <div>
-                <div className="text-xs text-gray-500 mb-2">Source Data</div>
-                <div className="space-y-3">
+              <div className="mb-6">
+                <div className="text-[11px] font-bold text-[#9E9E9E] uppercase mb-2" style={{ letterSpacing: '0.5px' }}>
+                  Source Data
+                </div>
+                <div className="space-y-1">
                   {ticket.custom_fields.map((field, index) => {
                     const handleCopy = () => {
                       navigator.clipboard.writeText(field.value)
@@ -1197,31 +1323,32 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                     const isEmail = field.type === 'email' || (field.value.includes('@') && field.value.includes('.'))
 
                     return (
-                      <div key={index} className="grid grid-cols-[35%_65%] gap-2">
-                        <div className="text-xs text-gray-500 break-words">{field.label}:</div>
-                        <div className="text-sm text-gray-900 break-words">
+                      <div key={index} className="grid grid-cols-[40%_60%] gap-2 items-start">
+                        <div className="text-[13px] font-normal text-[#757575]">{field.label}:</div>
+                        <div className="text-[13px] font-medium text-[#212121]" style={{ wordBreak: 'break-word' }}>
                           {isUrl ? (
                             <a
                               href={field.value}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-700 underline inline-flex items-center gap-1 max-w-full"
+                              className="text-[#1976D2] hover:underline inline-flex items-center gap-1"
                             >
-                              <span className="truncate">
+                              <span className="truncate" style={{ maxWidth: '140px' }}>
                                 {field.displayText || field.value}
                               </span>
-                              <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                              <ExternalLink className="h-3 w-3 flex-shrink-0 text-gray-500" />
                             </a>
                           ) : isEmail ? (
                             <a
                               href={`mailto:${field.value}`}
-                              className="text-blue-600 hover:text-blue-700 underline break-all"
+                              className="text-[#212121] cursor-pointer hover:underline"
+                              style={{ wordBreak: 'break-all' }}
                             >
                               {field.value}
                             </a>
                           ) : (
-                            <div className="flex items-center gap-1.5 group/copy">
-                              <span className="break-all">{field.value}</span>
+                            <div className="flex items-center gap-1.5 group/copy relative">
+                              <span style={{ wordBreak: 'break-all' }}>{field.value}</span>
                               {(field.copyable || field.type === 'text') && (
                                 <button
                                   onClick={handleCopy}
@@ -1243,29 +1370,31 @@ export default function TicketView({ ticketId }: TicketViewProps) {
 
             {/* Секция "Bot Information" */}
             {(ticket.transactionId || ticket.environment || ticket.errorLogs) && (
-              <div>
-                <div className="text-xs text-gray-500 mb-2">Bot Information</div>
-                <div className="space-y-2.5">
+              <div className="mb-6">
+                <div className="text-[11px] font-bold text-[#9E9E9E] uppercase mb-2" style={{ letterSpacing: '0.5px' }}>
+                  Bot Information
+                </div>
+                <div className="space-y-1">
                   {ticket.transactionId && (
-                    <div>
-                      <div className="text-xs text-gray-500 mb-0.5">transaction_id:</div>
-                      <div className="text-xs text-gray-900 font-mono break-all">
+                    <div className="grid grid-cols-[40%_60%] gap-2 items-start">
+                      <div className="text-[13px] font-normal text-[#757575]">transaction_id:</div>
+                      <div className="text-[11px] font-mono text-[#212121] break-all bg-[#F5F5F5] px-2 py-1 rounded">
                         {ticket.transactionId}
                       </div>
                     </div>
                   )}
                   {ticket.environment && (
-                    <div>
-                      <div className="text-xs text-gray-500 mb-0.5">environment:</div>
-                      <div className="text-xs text-gray-900 font-mono">
+                    <div className="grid grid-cols-[40%_60%] gap-2 items-start">
+                      <div className="text-[13px] font-normal text-[#757575]">environment:</div>
+                      <div className="text-[11px] font-mono text-[#212121] bg-[#F5F5F5] px-2 py-1 rounded">
                         {ticket.environment}
                       </div>
                     </div>
                   )}
                   {ticket.errorLogs && (
-                    <div>
-                      <div className="text-xs text-gray-500 mb-0.5">error_logs:</div>
-                      <div className="text-xs text-gray-900 font-mono break-all">
+                    <div className="mt-2">
+                      <div className="text-[13px] font-normal text-[#757575] mb-1">error_logs:</div>
+                      <div className="text-[11px] font-mono text-[#212121] break-all bg-[#FFEBEE] px-2 py-1 rounded" style={{ wordBreak: 'break-all' }}>
                         {ticket.errorLogs}
                       </div>
                     </div>
@@ -1275,8 +1404,10 @@ export default function TicketView({ ticketId }: TicketViewProps) {
             )}
 
             {/* Секция "Управление" - Теги */}
-            <div>
-              <div className="text-xs text-gray-500 mb-2">Tags</div>
+            <div className="mb-6">
+              <div className="text-[11px] font-bold text-[#9E9E9E] uppercase mb-2" style={{ letterSpacing: '0.5px' }}>
+                Tags
+              </div>
               <div className="flex flex-wrap gap-2">
                 {selectedTags.length > 0 &&
                   selectedTags.map((tag) => {
@@ -1313,7 +1444,9 @@ export default function TicketView({ ticketId }: TicketViewProps) {
 
             {/* Секция "Управление" - Assigned To */}
             <div>
-              <div className="text-xs text-gray-500 mb-2">Assigned To</div>
+              <div className="text-[11px] font-bold text-[#9E9E9E] uppercase mb-2" style={{ letterSpacing: '0.5px' }}>
+                Assigned To
+              </div>
               <div className="space-y-2">
                 {assignedUsers.length > 0 ? (
                   assignedUsers.map((user, idx) => (
