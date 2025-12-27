@@ -746,7 +746,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
             {mockTickets.map((t) => {
               const isActive = t.id === selectedTicketId
               const ticketAiTitle = getAiTitle(t)
-              const ticketSourceIcon = getSourceIcon(t.source)
+              const TicketSourceIcon = getSourceIcon(t.source)
               const ticketWaitTime = formatWaitTime(t.waitTimeHours)
               return (
                 <div
@@ -771,7 +771,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                     {/* Badge источника с белой обводкой */}
                     {t.source && (
                       <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-white flex items-center justify-center border-2 border-white">
-                        <ticketSourceIcon className={`h-2.5 w-2.5 ${getSourceIconColor(t.source)}`} />
+                        <TicketSourceIcon className={`h-2.5 w-2.5 ${getSourceIconColor(t.source)}`} />
                       </div>
                     )}
                   </div>

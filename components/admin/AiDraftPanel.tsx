@@ -79,7 +79,7 @@ export default function AiDraftPanel({
             {sources.map((source) => {
               const Icon = source.type === 'document' ? FileText : TicketIcon
               return (
-                <div key={source.id} className="relative flex-shrink-0" ref={(el) => (sourceRefs.current[source.id] = el)}>
+                <div key={source.id} className="relative flex-shrink-0" ref={(el) => { sourceRefs.current[source.id] = el }}>
                   <button
                     onClick={() => setSelectedSourceId(selectedSourceId === source.id ? null : source.id)}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-purple-300 rounded-full text-xs text-gray-700 hover:bg-purple-50 transition-colors whitespace-nowrap"
