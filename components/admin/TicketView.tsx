@@ -219,8 +219,8 @@ export default function TicketView({ ticketId }: TicketViewProps) {
       timestamp: '2025-12-15T10:15:00Z',
       isSystem: false,
       images: [
-        'https://placehold.co/400x300/FF6B6B/FFFFFF?text=Error+Screen',
-        'https://placehold.co/400x300/4ECDC4/FFFFFF?text=Error+Log',
+        'https://placehold.co/400x300/E0E0E0/9E9E9E?text=Error+Screen',
+        'https://placehold.co/400x300/E0E0E0/9E9E9E?text=Error+Log',
       ],
     },
     {
@@ -970,27 +970,41 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                         )}
 
                         {/* Изображения / Галерея */}
-                        {message.images && message.images.length > 0 && (
-                          <div className={`mb-2 ${message.images.length > 1 ? 'grid grid-cols-2 gap-1' : ''}`}>
-                            {message.images.map((img, idx) => (
-                              <div
-                                key={idx}
-                                className="relative rounded-lg overflow-hidden cursor-zoom-in"
-                                style={{ 
-                                  maxWidth: message.images.length === 1 ? '300px' : '100%',
-                                  maxHeight: '300px',
-                                }}
-                              >
-                                <img
-                                  src={img}
-                                  alt={`Image ${idx + 1}`}
-                                  className="w-full h-full object-cover"
-                                  style={{ borderRadius: '8px' }}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        {message.images && message.images.length > 0 && (() => {
+                          const images = message.images!
+                          return (
+                            <div className={`mb-2 ${images.length > 1 ? 'grid grid-cols-2 gap-1' : ''}`} style={{ maxWidth: images.length === 1 ? '400px' : '100%' }}>
+                              {images.map((img, idx) => (
+                                <div
+                                  key={idx}
+                                  className="relative rounded-lg overflow-hidden cursor-zoom-in bg-gray-100 group"
+                                  style={{ 
+                                    width: images.length === 1 ? '100%' : '100%',
+                                    height: images.length === 1 ? 'auto' : '150px',
+                                    aspectRatio: images.length === 1 ? '4/3' : '1',
+                                  }}
+                                >
+                                  <img
+                                    src={img}
+                                    alt={`Image ${idx + 1}`}
+                                    className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                                    style={{ 
+                                      borderRadius: '8px',
+                                      display: 'block',
+                                      minHeight: images.length === 1 ? '250px' : '150px',
+                                    }}
+                                    loading="lazy"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement
+                                      target.src = `https://via.placeholder.com/400x300/E0E0E0/9E9E9E?text=Image+${idx + 1}`
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors rounded-lg pointer-events-none"></div>
+                                </div>
+                              ))}
+                            </div>
+                          )
+                        })()}
 
                         {/* Видео */}
                         {message.video && (
