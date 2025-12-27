@@ -38,6 +38,15 @@ import {
   Download,
   Play,
   Image as ImageIcon,
+  Lock,
+  AlertCircle,
+  Bold,
+  Italic,
+  Heading,
+  Quote,
+  List,
+  Folder,
+  Save,
 } from 'lucide-react'
 import { mockTickets, Ticket } from '../../data/tickets'
 import { mockTags } from '../../data/tags'
@@ -126,6 +135,54 @@ export default function TicketView({ ticketId }: TicketViewProps) {
   } | null>(null)
   const [isSourceModalOpen, setIsSourceModalOpen] = useState(false)
 
+  // Состояния для вкладок
+  type TabType = 'public' | 'team' | 'dossier'
+  const [activeTab, setActiveTab] = useState<TabType>('public')
+  const [publicReplyNotifications, setPublicReplyNotifications] = useState(1) // Красная точка
+  const [teamChatNotifications, setTeamChatNotifications] = useState(2) // Счетчик непрочитанных
+  const [publicReplyPulse, setPublicReplyPulse] = useState(false)
+  const [teamChatPulse, setTeamChatPulse] = useState(false)
+  
+  // Состояния для Team Chat
+  const [typingUsers, setTypingUsers] = useState<string[]>([])
+  const [teamMessageText, setTeamMessageText] = useState('')
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState<string | null>(null) // ID сообщения, для которого открыт пикер
+  const [hoveredReaction, setHoveredReaction] = useState<{ messageId: string; emoji: string } | null>(null)
+  const emojiPickerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
+
+  // Состояния для User Dossier
+  const [isDossierEditMode, setIsDossierEditMode] = useState(false)
+  const [dossierContent, setDossierContent] = useState(ticket?.dossier_content || '')
+  const [dossierAttachments, setDossierAttachments] = useState<Array<{
+    name: string
+    url: string
+    type: 'image' | 'pdf' | 'other'
+  }>>(ticket?.dossier_attachments || [])
+  const dossierEditorRef = useRef<HTMLTextAreaElement>(null)
+  const dossierFileInputRef = useRef<HTMLInputElement>(null)
+
+  // Синхронизация состояния досье при изменении тикета
+  useEffect(() => {
+    if (ticket) {
+      setDossierContent(ticket.dossier_content || '')
+      setDossierAttachments(ticket.dossier_attachments || [])
+      setIsDossierEditMode(false)
+    }
+  }, [ticket?.id])
+
+  // Эффект для триггера анимации pulse при изменении счетчика уведомлений
+  useEffect(() => {
+    if (publicReplyNotifications > 0 && activeTab !== 'public') {
+      setPublicReplyPulse(true)
+    }
+  }, [publicReplyNotifications, activeTab])
+
+  useEffect(() => {
+    if (teamChatNotifications > 0 && activeTab !== 'team') {
+      setTeamChatPulse(true)
+    }
+  }, [teamChatNotifications, activeTab])
+
   // Закрытие dropdown при клике вне его
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -160,13 +217,24 @@ export default function TicketView({ ticketId }: TicketViewProps) {
           setMessageContextMenuOpen(null)
         }
       }
+      // Закрытие пикера эмодзи
+      if (emojiPickerOpen) {
+        const ref = emojiPickerRefs.current[emojiPickerOpen]
+        if (ref && !ref.contains(event.target as Node)) {
+          // Проверяем, что клик не был по кнопке добавления реакции
+          const target = event.target as HTMLElement
+          if (!target.closest('[title="Add reaction"]')) {
+            setEmojiPickerOpen(null)
+          }
+        }
+      }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [messageContextMenuOpen])
+  }, [messageContextMenuOpen, emojiPickerOpen])
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessageText(e.target.value)
@@ -252,6 +320,101 @@ export default function TicketView({ ticketId }: TicketViewProps) {
       isSystem: false,
     },
   ]
+
+  // Mock данные для Team Chat
+  interface Reaction {
+    emoji: string
+    count: number
+    me: boolean // Я поставил эту реакцию
+    users: string[] // Список пользователей для tooltip
+  }
+
+  const teamChatMessages: (Message & { reactions?: Reaction[] })[] = [
+    {
+      id: 'team-1',
+      author: 'Alex Admin',
+      authorId: 'admin',
+      content: 'Ребята, у этого клиента проблемы с API. @Maria Dev посмотри логи пожалуйста.',
+      timestamp: '2025-12-15T14:30:00Z',
+      isSystem: false,
+      reactions: [
+        {
+          emoji: '👍',
+          count: 1,
+          me: true, // Я поставил эту реакцию
+          users: ['You'],
+        },
+        {
+          emoji: '👀',
+          count: 2,
+          me: false, // Я не ставил
+          users: ['Maria Dev', 'Bob Manager'],
+        },
+      ],
+    },
+    {
+      id: 'team-2',
+      author: 'Maria Dev',
+      authorId: 'admin',
+      content: 'Смотрю. Кажется, он превысил лимиты.',
+      timestamp: '2025-12-15T14:32:00Z',
+      isSystem: false,
+    },
+  ]
+
+  // Топ-6 реакций для пикера
+  const quickReactions = ['👍', '👀', '✅', '🔥', '🤔', '❌']
+
+  // Функция форматирования списка пользователей для tooltip
+  const formatReactionUsers = (users: string[], count: number) => {
+    if (users.length === 1) {
+      return users[0]
+    }
+    if (users.length <= 3) {
+      return users.join(', ')
+    }
+    return `${users.slice(0, 2).join(', ')} and ${count - 2} others`
+  }
+
+  // Функция toggle реакции
+  const toggleReaction = (messageId: string, emoji: string) => {
+    // Здесь будет логика обновления реакций
+    // Пока просто закрываем пикер
+    setEmojiPickerOpen(null)
+  }
+
+  // Функция парсинга @mentions
+  const parseMentions = (text: string) => {
+    const parts: Array<{ type: 'text' | 'mention'; content: string }> = []
+    const mentionRegex = /@(\w+)/g
+    let lastIndex = 0
+    let match
+
+    while ((match = mentionRegex.exec(text)) !== null) {
+      // Добавляем текст до упоминания
+      if (match.index > lastIndex) {
+        parts.push({
+          type: 'text',
+          content: text.substring(lastIndex, match.index),
+        })
+      }
+      // Добавляем упоминание
+      parts.push({
+        type: 'mention',
+        content: match[0], // @username
+      })
+      lastIndex = mentionRegex.lastIndex
+    }
+    // Добавляем оставшийся текст
+    if (lastIndex < text.length) {
+      parts.push({
+        type: 'text',
+        content: text.substring(lastIndex),
+      })
+    }
+
+    return parts.length > 0 ? parts : [{ type: 'text', content: text }]
+  }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -491,7 +654,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
   return (
     <div className="flex flex-col h-full bg-gray-50">
       {/* Head Page - Верхняя панель управления */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <div className="bg-white px-6 py-4 flex items-center justify-between">
         {/* Левая часть - Навигация */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <button
@@ -632,13 +795,13 @@ export default function TicketView({ ticketId }: TicketViewProps) {
           style={{ width: '275px', minWidth: '250px', maxWidth: '300px' }}
         >
           {/* Поиск */}
-          <div className="p-4 border-b border-[#F0F0F0]">
+          <div className="p-4 pb-2">
             <div className="relative" ref={searchSettingsRef}>
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#9E9E9E]" />
               <input
                 type="text"
                 placeholder="Search tickets"
-                className="w-full pl-10 pr-10 py-2 bg-[#FAFAFA] border border-[#E0E0E0] rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-10 py-2 bg-[#F5F5F5] rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 onClick={(e) => {
@@ -802,13 +965,46 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                         <TicketSourceIcon className={`h-2.5 w-2.5 ${getSourceIconColor(t.source)}`} />
                       </div>
                     )}
+                    {/* Индикатор непрочитанного сообщения (красная точка) */}
+                    {(t.unread_messages_count ?? 0) > 0 && (
+                      <div 
+                        className="absolute rounded-full"
+                        style={{ 
+                          width: '8px', 
+                          height: '8px', 
+                          backgroundColor: '#D32F2F',
+                          border: '2px solid white',
+                          top: '-2px',
+                          right: '-2px',
+                          zIndex: 10
+                        }}
+                      />
+                    )}
                   </div>
                   
                   {/* Контентная часть */}
                   <div className="flex-1 min-w-0 flex flex-col">
-                    {/* Ряд 1: AI Title (с переносом) */}
-                    <div className="text-[13px] font-semibold text-[#212121] mb-1" style={{ lineHeight: '1.3' }}>
-                      <div className="line-clamp-2">{ticketAiTitle}</div>
+                    {/* Ряд 1: AI Title (с переносом) + Mention Badge */}
+                    <div className="flex items-start gap-1 mb-1" style={{ lineHeight: '1.3' }}>
+                      <div className="text-[13px] font-semibold text-[#212121] flex-1 min-w-0 line-clamp-2">
+                        {ticketAiTitle}
+                      </div>
+                      {t.has_private_mention && (
+                        <div 
+                          className="flex-shrink-0 flex items-center justify-center rounded-full mt-0.5"
+                          style={{ 
+                            width: '18px', 
+                            height: '18px',
+                            backgroundColor: '#E3F2FD',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            color: '#1976D2',
+                            lineHeight: '1'
+                          }}
+                        >
+                          @
+                        </div>
+                      )}
                     </div>
                     
                     {/* Ряд 2: User Name + Wait Time */}
@@ -850,9 +1046,106 @@ export default function TicketView({ ticketId }: TicketViewProps) {
         </div>
 
         {/* Центральная панель - Чат */}
-        <div className="flex-1 flex flex-col bg-[#F8F9FA] overflow-hidden">
-          {/* История сообщений */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div
+          className="flex-1 flex flex-col overflow-hidden"
+          style={{
+            backgroundColor:
+              activeTab === 'public'
+                ? '#F5F7FB'
+                : activeTab === 'team'
+                ? '#FFFDF5'
+                : '#FFFFFF',
+          }}
+        >
+          {/* Панель вкладок */}
+          <div className="bg-white border-b border-[#E0E0E0] pt-3">
+            <div className="flex items-end px-4">
+              {/* Public Reply Tab */}
+              <button
+                onClick={() => {
+                  setActiveTab('public')
+                  setPublicReplyNotifications(0)
+                  setPublicReplyPulse(false)
+                }}
+                className="relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: activeTab === 'public' ? '#F5F7FB' : 'transparent',
+                  color: activeTab === 'public' ? '#212121' : '#757575',
+                  fontWeight: activeTab === 'public' ? 'bold' : 'normal',
+                }}
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span>Public Reply</span>
+                {publicReplyNotifications > 0 && activeTab !== 'public' && (
+                  <span
+                    className={`absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full ${
+                      publicReplyPulse ? 'badge-pulse-red' : ''
+                    }`}
+                    onAnimationEnd={() => setPublicReplyPulse(false)}
+                  />
+                )}
+              </button>
+
+              {/* Team Chat Tab */}
+              <button
+                onClick={() => {
+                  setActiveTab('team')
+                  setTeamChatNotifications(0)
+                  setTeamChatPulse(false)
+                }}
+                className="relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: activeTab === 'team' ? '#FFFDF5' : 'transparent',
+                  color: activeTab === 'team' ? '#212121' : '#757575',
+                  fontWeight: activeTab === 'team' ? 'bold' : 'normal',
+                }}
+              >
+                <Lock className="h-4 w-4" />
+                <span>Team Chat</span>
+                {teamChatNotifications > 0 && activeTab !== 'team' && (
+                  <span
+                    className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1.5 bg-[#1976D2] text-white text-[10px] font-semibold rounded-full flex items-center justify-center ${
+                      teamChatPulse ? 'badge-pulse-blue' : ''
+                    }`}
+                    onAnimationEnd={() => setTeamChatPulse(false)}
+                  >
+                    {teamChatNotifications}
+                  </span>
+                )}
+              </button>
+
+              {/* User Dossier Tab */}
+              <button
+                onClick={() => setActiveTab('dossier')}
+                className="relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: activeTab === 'dossier' ? '#FFFFFF' : 'transparent',
+                  color: activeTab === 'dossier' ? '#212121' : '#757575',
+                  fontWeight: activeTab === 'dossier' ? 'bold' : 'normal',
+                }}
+              >
+                {(() => {
+                  const hasContent = ticket?.dossier_content && ticket.dossier_content.trim().length > 0
+                  const hasAttachments = ticket?.dossier_attachments && ticket.dossier_attachments.length > 0
+                  const isFilled = hasContent || hasAttachments
+                  return (
+                    <FileText 
+                      className={`h-4 w-4 ${isFilled ? 'text-[#1976D2]' : 'text-[#757575]'}`}
+                      fill={isFilled ? 'currentColor' : 'none'}
+                      strokeWidth={isFilled ? 0 : 1.5}
+                    />
+                  )
+                })()}
+                <span>User Dossier</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Режим: Public Reply */}
+          {activeTab === 'public' && (
+            <>
+              {/* История сообщений */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Разделитель даты */}
             <div className="flex items-center gap-4 my-6">
               <div className="flex-1 h-px bg-gray-300"></div>
@@ -1194,16 +1487,16 @@ export default function TicketView({ ticketId }: TicketViewProps) {
             })}
           </div>
 
-          {/* AI Context Bar */}
-          <AiContextBar
-            isVisible={isContextBarVisible}
-            onClose={() => setIsContextBarVisible(false)}
-            sources={aiSources}
-            onSourceClick={handleSourceClick}
-          />
+              {/* AI Context Bar */}
+              <AiContextBar
+                isVisible={isContextBarVisible}
+                onClose={() => setIsContextBarVisible(false)}
+                sources={aiSources}
+                onSourceClick={handleSourceClick}
+              />
 
-          {/* Ввод сообщения */}
-          <div className="bg-white border-t border-gray-200 p-4">
+              {/* Ввод сообщения */}
+              <div className="bg-white border-t border-gray-200 p-4">
             <div className="flex items-end gap-2">
               <button className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0">
                 <Plus className="h-5 w-5 text-gray-500" />
@@ -1243,6 +1536,696 @@ export default function TicketView({ ticketId }: TicketViewProps) {
               </div>
             </div>
           </div>
+            </>
+          )}
+
+          {/* Режим: Team Chat */}
+          {activeTab === 'team' && (
+            <>
+              {/* История сообщений Team Chat */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {/* Разделитель даты */}
+                <div className="flex items-center gap-4 my-6">
+                  <div className="flex-1 h-px bg-gray-300"></div>
+                  <span className="text-xs font-medium text-gray-500 px-2">
+                    {formatDate(teamChatMessages[0].timestamp)}
+                  </span>
+                  <div className="flex-1 h-px bg-gray-300"></div>
+                </div>
+
+                {/* Сообщения Team Chat */}
+                {teamChatMessages.map((message, index) => {
+                  const showDateDivider =
+                    index > 0 &&
+                    formatDate(message.timestamp) !== formatDate(teamChatMessages[index - 1].timestamp)
+
+                  const prevMessage = index > 0 ? teamChatMessages[index - 1] : null
+                  const isSameAuthor =
+                    prevMessage &&
+                    !prevMessage.isSystem &&
+                    !message.isSystem &&
+                    prevMessage.authorId === message.authorId &&
+                    formatDate(prevMessage.timestamp) === formatDate(message.timestamp)
+                  const showAvatar =
+                    !message.isSystem &&
+                    (!prevMessage ||
+                      prevMessage.authorId !== message.authorId ||
+                      prevMessage.isSystem ||
+                      formatDate(prevMessage.timestamp) !== formatDate(message.timestamp))
+
+                  const parsedContent = parseMentions(message.content)
+
+                  return (
+                    <div key={message.id}>
+                      {showDateDivider && (
+                        <div className="flex items-center gap-4 my-6">
+                          <div className="flex-1 h-px bg-gray-300"></div>
+                          <span className="text-xs font-medium text-gray-500 px-2">
+                            {formatDate(message.timestamp)}
+                          </span>
+                          <div className="flex-1 h-px bg-gray-300"></div>
+                        </div>
+                      )}
+
+                      <div
+                        className={`group flex items-start gap-3 ${
+                          isSameAuthor ? 'mt-1' : 'mt-4'
+                        }`}
+                      >
+                        {/* Аватар - всегда показываем в Team Chat */}
+                        <div className="w-8 flex-shrink-0">
+                          <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                            <span className="text-xs font-medium text-gray-600">
+                              {message.author.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Контент сообщения - всегда слева */}
+                        <div className="flex-1 min-w-0">
+                          {/* Заголовок с именем и временем - всегда показываем в Team Chat */}
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[13px] font-bold text-[#212121]">{message.author}</span>
+                            <span className="text-[11px] text-gray-500">{formatTime(message.timestamp)}</span>
+                          </div>
+
+                          {/* Пузырь сообщения */}
+                          <div
+                            className="px-3 py-2 relative inline-block bg-white text-[#212121] shadow-sm rounded-lg"
+                            style={{ borderRadius: '8px' }}
+                          >
+                            {/* Текст сообщения с парсингом @mentions */}
+                            <div className="text-[14px] whitespace-pre-wrap" style={{ lineHeight: '1.45' }}>
+                              {parsedContent.map((part, partIndex) => {
+                                if (part.type === 'mention') {
+                                  return (
+                                    <span
+                                      key={partIndex}
+                                      className="text-[#1976D2] font-medium px-1 py-0.5 rounded"
+                                      style={{
+                                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                                        fontWeight: 500,
+                                      }}
+                                    >
+                                      {part.content}
+                                    </span>
+                                  )
+                                }
+                                return <span key={partIndex}>{part.content}</span>
+                              })}
+                            </div>
+
+                            {/* Кнопка добавления реакции (появляется при hover) */}
+                            <button
+                              className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 p-1.5 bg-white hover:bg-gray-50 rounded-full shadow-sm border border-gray-200 transition-all z-10"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setEmojiPickerOpen(emojiPickerOpen === message.id ? null : message.id)
+                              }}
+                              title="Add reaction"
+                            >
+                              <span className="text-xs text-gray-500 hover:text-gray-700">😊</span>
+                            </button>
+
+                            {/* Пикер эмодзи */}
+                            {emojiPickerOpen === message.id && (
+                              <div
+                                ref={(el) => {
+                                  emojiPickerRefs.current[message.id] = el
+                                }}
+                                className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-20"
+                                style={{ minWidth: '200px' }}
+                              >
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {quickReactions.map((emoji) => (
+                                    <button
+                                      key={emoji}
+                                      onClick={() => toggleReaction(message.id, emoji)}
+                                      className="p-2 hover:bg-gray-100 rounded transition-colors text-lg"
+                                      title={emoji}
+                                    >
+                                      {emoji}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Реакции */}
+                          {message.reactions && message.reactions.length > 0 && (
+                            <div className="flex items-center gap-2 mt-1 ml-1 flex-wrap">
+                              {message.reactions.map((reaction, reactionIndex) => {
+                                const isHovered =
+                                  hoveredReaction?.messageId === message.id &&
+                                  hoveredReaction?.emoji === reaction.emoji
+                                const tooltipText = formatReactionUsers(reaction.users, reaction.count)
+
+                                return (
+                                  <div key={reactionIndex} className="relative">
+                                    <button
+                                      onClick={() => toggleReaction(message.id, reaction.emoji)}
+                                      onMouseEnter={() =>
+                                        setHoveredReaction({ messageId: message.id, emoji: reaction.emoji })
+                                      }
+                                      onMouseLeave={() => setHoveredReaction(null)}
+                                      className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-colors ${
+                                        reaction.me
+                                          ? 'bg-blue-50 border border-[#1976D2] text-[#1976D2] hover:bg-blue-100'
+                                          : 'bg-gray-100 border border-[#E0E0E0] text-gray-600 hover:bg-gray-200'
+                                      }`}
+                                    >
+                                      <span>{reaction.emoji}</span>
+                                      <span>{reaction.count}</span>
+                                    </button>
+
+                                    {/* Tooltip с информацией о пользователях */}
+                                    {isHovered && (
+                                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-30">
+                                        {tooltipText}
+                                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                                          <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                          {(!message.reactions || message.reactions.length === 0) && (
+                            <div className="opacity-0 group-hover:opacity-100 mt-1 ml-1 transition-opacity">
+                              <button
+                                onClick={() => setEmojiPickerOpen(emojiPickerOpen === message.id ? null : message.id)}
+                                className="p-1 hover:bg-gray-100 rounded transition-all"
+                                title="Add reaction"
+                              >
+                                <span className="text-xs text-gray-500">😊</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+
+                {/* Индикатор печати */}
+                {typingUsers.length > 0 && (
+                  <div className="flex items-center gap-3 mt-4">
+                    <div className="w-8"></div>
+                    <div className="text-xs text-gray-500 italic">
+                      {typingUsers.length === 1
+                        ? `${typingUsers[0]} is typing`
+                        : typingUsers.length === 2
+                        ? `${typingUsers[0]} and ${typingUsers[1]} are typing`
+                        : `${typingUsers[0]} and ${typingUsers.length - 1} others are typing`}
+                      <span className="inline-flex gap-0.5 ml-1">
+                        <span className="typing-dot">.</span>
+                        <span className="typing-dot">.</span>
+                        <span className="typing-dot">.</span>
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Ввод сообщения Team Chat */}
+              <div className="bg-white border-t border-gray-200 p-4">
+                <div className="flex items-end gap-2">
+                  <button className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0">
+                    <Plus className="h-5 w-5 text-gray-500" />
+                  </button>
+                  <div className="flex-1 relative">
+                    <textarea
+                      placeholder="Message to team..."
+                      className="w-full resize-none border border-gray-300 rounded-lg px-4 py-2.5 pr-24 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      rows={2}
+                      value={teamMessageText}
+                      onChange={(e) => {
+                        setTeamMessageText(e.target.value)
+                        // Автоматическое увеличение высоты
+                        e.target.style.height = 'auto'
+                        e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`
+                      }}
+                      style={{
+                        minHeight: '60px',
+                        maxHeight: '150px',
+                        backgroundColor: 'rgba(255, 249, 196, 0.3)',
+                      }}
+                    />
+                    <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                      {/* Кнопка отправки с иконкой замка */}
+                      <button
+                        className="p-2 hover:bg-yellow-100 rounded transition-colors flex-shrink-0"
+                        style={{ backgroundColor: '#FFC107', color: '#212121' }}
+                        title="Отправить внутреннее сообщение"
+                      >
+                        <Lock className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Режим: User Dossier */}
+          {activeTab === 'dossier' && (
+            <div className="flex-1 flex flex-col overflow-hidden bg-white">
+              {!isDossierEditMode ? (
+                /* Режим просмотра (Read Mode) */
+                <>
+                  {/* Header */}
+                  <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <h6 className="text-base font-bold text-[#212121]">
+                Dossier: {ticket.username
+                  .split('_')
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(' ')}
+                    </h6>
+                    <button
+                      onClick={() => {
+                        setIsDossierEditMode(true)
+                        setDossierContent(ticket?.dossier_content || '')
+                      }}
+                      className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-sm font-medium text-[#212121]"
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span>Edit</span>
+                    </button>
+                  </div>
+
+                  {/* Content Area */}
+                  <div className="flex-1 overflow-y-auto p-6">
+                    {(() => {
+                      const hasContent = ticket?.dossier_content && ticket.dossier_content.trim().length > 0
+                      const hasAttachments = ticket?.dossier_attachments && ticket.dossier_attachments.length > 0
+
+                      if (!hasContent && !hasAttachments) {
+                        // Empty State
+                        return (
+                          <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
+                            <Folder className="h-16 w-16 text-gray-400 mb-4" />
+                            <p className="text-gray-600 text-base mb-4">No notes for this user yet.</p>
+                            <button
+                              onClick={() => {
+                                setIsDossierEditMode(true)
+                                setDossierContent('')
+                              }}
+                              className="px-4 py-2 bg-[#1976D2] text-white rounded-md hover:bg-[#1565C0] transition-colors text-sm font-medium"
+                            >
+                              Create Dossier
+                            </button>
+                          </div>
+                        )
+                      }
+
+                      // Render Markdown Content
+                      const renderMarkdown = (content: string) => {
+                        // Простой парсер markdown для базовых элементов
+                        let html = content
+                        
+                        // Headers
+                        html = html.replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mb-4 mt-6 text-[#212121]">$1</h1>')
+                        html = html.replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mb-3 mt-5 text-[#212121]">$1</h2>')
+                        html = html.replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold mb-2 mt-4 text-[#212121]">$1</h3>')
+                        
+                        // Bold
+                        html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
+                        
+                        // Italic
+                        html = html.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
+                        
+                        // Blockquote
+                        html = html.replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-gray-300 pl-4 py-2 my-4 italic text-gray-700">$1</blockquote>')
+                        
+                        // Lists
+                        html = html.replace(/^- (.*$)/gim, '<li class="ml-6 mb-1">$1</li>')
+                        html = html.replace(/^\* (.*$)/gim, '<li class="ml-6 mb-1">$1</li>')
+                        
+                        // Wrap consecutive list items in ul
+                        html = html.replace(/(<li.*?<\/li>\n?)+/g, (match) => {
+                          return '<ul class="list-disc space-y-2 my-4">' + match + '</ul>'
+                        })
+                        
+                        // Links
+                        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-[#1976D2] hover:underline">$1</a>')
+                        
+                        // Images
+                        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full rounded-lg my-4" style="border-radius: 8px;" />')
+                        
+                        // Paragraphs
+                        const lines = html.split('\n')
+                        const processed: string[] = []
+                        let inList = false
+                        
+                        for (let i = 0; i < lines.length; i++) {
+                          const line = lines[i].trim()
+                          if (!line) {
+                            if (inList) {
+                              inList = false
+                            }
+                            continue
+                          }
+                          
+                          if (line.startsWith('<h') || line.startsWith('<blockquote') || line.startsWith('<ul') || line.startsWith('<li') || line.startsWith('<img')) {
+                            processed.push(line)
+                            if (line.startsWith('<ul')) inList = true
+                            if (line.startsWith('</ul>')) inList = false
+                          } else if (!inList && !line.startsWith('</')) {
+                            processed.push(`<p class="mb-4 text-[#212121]" style="line-height: 1.6;">${line}</p>`)
+                          } else {
+                            processed.push(line)
+                          }
+                        }
+                        
+                        return processed.join('\n')
+                      }
+
+                      return (
+                        <div className="prose max-w-none">
+                          <div 
+                            className="prose prose-sm max-w-none"
+                  style={{
+                              fontSize: '14px',
+                              lineHeight: '1.6',
+                            }}
+                            dangerouslySetInnerHTML={{ __html: renderMarkdown(ticket?.dossier_content || '') }}
+                          />
+                          
+                          {/* Attachments */}
+                          {ticket?.dossier_attachments && ticket.dossier_attachments.length > 0 && (
+                            <div className="mt-6 space-y-2">
+                              {ticket.dossier_attachments.map((attachment, idx) => (
+                                <div
+                                  key={idx}
+                                  className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                                >
+                                  {attachment.type === 'image' ? (
+                                    <ImageIcon className="h-5 w-5 text-blue-600" />
+                                  ) : (
+                                    <FileText className="h-5 w-5 text-red-600" />
+                                  )}
+                                  <span className="text-sm text-[#212121] font-medium flex-1">{attachment.name}</span>
+                                  <button className="p-1 hover:bg-gray-200 rounded transition-colors">
+                                    <Download className="h-4 w-4 text-gray-500" />
+                                  </button>
+                      </div>
+                              ))}
+                    </div>
+                          )}
+                  </div>
+                      )
+                    })()}
+                  </div>
+                </>
+              ) : (
+                /* Режим редактирования (Edit Mode) */
+                <>
+                  {/* Toolbar */}
+                  <div className="bg-[#F5F5F5] border-b border-gray-200 px-4 py-2 flex items-center gap-2 sticky top-0 z-10">
+                    <button
+                      onClick={() => {
+                        const editor = dossierEditorRef.current
+                        if (editor) {
+                          const start = editor.selectionStart
+                          const end = editor.selectionEnd
+                          const selectedText = editor.value.substring(start, end)
+                          const newText = `**${selectedText}**`
+                          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end)
+                          editor.focus()
+                          editor.setSelectionRange(start + 2, start + 2 + selectedText.length)
+                        }
+                      }}
+                      className="p-2 hover:bg-gray-200 rounded transition-colors"
+                      title="Bold"
+                    >
+                      <Bold className="h-5 w-5 text-black" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const editor = dossierEditorRef.current
+                        if (editor) {
+                          const start = editor.selectionStart
+                          const end = editor.selectionEnd
+                          const selectedText = editor.value.substring(start, end)
+                          const newText = `*${selectedText}*`
+                          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end)
+                          editor.focus()
+                          editor.setSelectionRange(start + 1, start + 1 + selectedText.length)
+                        }
+                      }}
+                      className="p-2 hover:bg-gray-200 rounded transition-colors"
+                      title="Italic"
+                    >
+                      <Italic className="h-5 w-5 text-black" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const editor = dossierEditorRef.current
+                        if (editor) {
+                          const start = editor.selectionStart
+                          const end = editor.selectionEnd
+                          const newText = `## ${editor.value.substring(start, end)}\n`
+                          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end)
+                          editor.focus()
+                          editor.setSelectionRange(start + 3, start + 3 + (end - start))
+                        }
+                      }}
+                      className="p-2 hover:bg-gray-200 rounded transition-colors"
+                      title="Heading"
+                    >
+                      <Heading className="h-5 w-5 text-black" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const editor = dossierEditorRef.current
+                        if (editor) {
+                          const start = editor.selectionStart
+                          const end = editor.selectionEnd
+                          const newText = `> ${editor.value.substring(start, end)}\n`
+                          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end)
+                          editor.focus()
+                          editor.setSelectionRange(start + 2, start + 2 + (end - start))
+                        }
+                      }}
+                      className="p-2 hover:bg-gray-200 rounded transition-colors"
+                      title="Quote"
+                    >
+                      <Quote className="h-5 w-5 text-black" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const editor = dossierEditorRef.current
+                        if (editor) {
+                          const start = editor.selectionStart
+                          const newText = `- ${editor.value.substring(start)}\n`
+                          editor.value = editor.value.substring(0, start) + newText
+                          editor.focus()
+                          editor.setSelectionRange(start + 2, start + 2)
+                        }
+                      }}
+                      className="p-2 hover:bg-gray-200 rounded transition-colors"
+                      title="Bullet List"
+                    >
+                      <List className="h-5 w-5 text-black" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const editor = dossierEditorRef.current
+                        if (editor) {
+                          const start = editor.selectionStart
+                          const end = editor.selectionEnd
+                          const selectedText = editor.value.substring(start, end) || 'link text'
+                          const newText = `[${selectedText}](url)`
+                          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end)
+                          editor.focus()
+                          editor.setSelectionRange(start + newText.length - 5, start + newText.length - 2)
+                        }
+                      }}
+                      className="p-2 hover:bg-gray-200 rounded transition-colors"
+                      title="Link"
+                    >
+                      <LinkIcon className="h-5 w-5 text-black" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const editor = dossierEditorRef.current
+                        if (editor) {
+                          const start = editor.selectionStart
+                          const newText = `![alt text](image-url)\n`
+                          editor.value = editor.value.substring(0, start) + newText + editor.value.substring(start)
+                          editor.focus()
+                          editor.setSelectionRange(start + 2, start + 9)
+                        }
+                      }}
+                      className="p-2 hover:bg-gray-200 rounded transition-colors"
+                      title="Image"
+                    >
+                      <ImageIcon className="h-5 w-5 text-black" />
+                    </button>
+                    <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                    <button
+                      onClick={() => dossierFileInputRef.current?.click()}
+                      className="p-2 hover:bg-gray-200 rounded transition-colors"
+                      title="Add File"
+                    >
+                      <Plus className="h-5 w-5 text-black" />
+                    </button>
+                  </div>
+
+                  {/* Скрытый input для загрузки файлов */}
+                  <input
+                    ref={dossierFileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = e.target.files
+                      if (files) {
+                        const newAttachments = Array.from(files).map((file) => {
+                          const fileName = file.name
+                          const fileExtension = fileName.split('.').pop()?.toLowerCase() || ''
+                          let fileType: 'image' | 'pdf' | 'other' = 'other'
+                          
+                          if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExtension)) {
+                            fileType = 'image'
+                          } else if (fileExtension === 'pdf') {
+                            fileType = 'pdf'
+                          }
+                          
+                          // Создаем временный URL для предпросмотра
+                          const url = URL.createObjectURL(file)
+                          
+                          return {
+                            name: fileName,
+                            url: url,
+                            type: fileType,
+                          }
+                        })
+                        
+                        setDossierAttachments([...dossierAttachments, ...newAttachments])
+                      }
+                      // Сброс input для возможности повторной загрузки того же файла
+                      if (e.target) {
+                        e.target.value = ''
+                      }
+                    }}
+                  />
+
+                  {/* Editor */}
+                  <div className="flex-1 overflow-y-auto p-6">
+                    <textarea
+                      ref={dossierEditorRef}
+                      value={dossierContent}
+                      onChange={(e) => setDossierContent(e.target.value)}
+                      className="w-full h-full min-h-[400px] p-4 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      style={{
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        fontSize: '14px',
+                        lineHeight: '1.6',
+                      }}
+                      placeholder="Начните вводить заметки о пользователе..."
+                    />
+                    
+                    {/* Список загруженных файлов */}
+                    {dossierAttachments.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-semibold text-[#212121]">Прикрепленные файлы</h4>
+                          <button
+                            onClick={() => dossierFileInputRef.current?.click()}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#1976D2] hover:bg-blue-50 rounded-md transition-colors"
+                          >
+                            <Plus className="h-4 w-4" />
+                            <span>Добавить файл</span>
+                          </button>
+                        </div>
+                        <div className="space-y-2">
+                          {dossierAttachments.map((attachment, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors group"
+                            >
+                              {attachment.type === 'image' ? (
+                                <ImageIcon className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                              ) : attachment.type === 'pdf' ? (
+                                <FileText className="h-5 w-5 text-red-600 flex-shrink-0" />
+                              ) : (
+                                <FileText className="h-5 w-5 text-gray-600 flex-shrink-0" />
+                              )}
+                              <span className="text-sm text-[#212121] font-medium flex-1 truncate">
+                                {attachment.name}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  // Освобождаем URL объекта, если это временный URL
+                                  if (attachment.url.startsWith('blob:')) {
+                                    URL.revokeObjectURL(attachment.url)
+                                  }
+                                  setDossierAttachments(dossierAttachments.filter((_, i) => i !== idx))
+                                }}
+                                className="p-1.5 hover:bg-red-100 rounded transition-colors opacity-0 group-hover:opacity-100"
+                                title="Удалить файл"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Кнопка добавления файлов, если список пуст */}
+                    {dossierAttachments.length === 0 && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <button
+                          onClick={() => dossierFileInputRef.current?.click()}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-[#1976D2] hover:bg-blue-50 rounded-md transition-colors border border-dashed border-gray-300 hover:border-[#1976D2]"
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span>Добавить файл</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Bar (Sticky Bottom) */}
+                  <div className="bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3 sticky bottom-0">
+                    <button
+                      onClick={() => {
+                        // Освобождаем временные URL объектов при отмене
+                        dossierAttachments.forEach((attachment) => {
+                          if (attachment.url.startsWith('blob:')) {
+                            URL.revokeObjectURL(attachment.url)
+                          }
+                        })
+                        setIsDossierEditMode(false)
+                        setDossierContent(ticket?.dossier_content || '')
+                        setDossierAttachments(ticket?.dossier_attachments || [])
+                      }}
+                      className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors text-sm font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Здесь будет сохранение данных
+                        // В реальном приложении здесь будет API вызов для сохранения dossierContent и dossierAttachments
+                        setIsDossierEditMode(false)
+                        // После сохранения временные URL будут заменены на постоянные
+                      }}
+                      className="px-4 py-2 bg-[#1976D2] text-white rounded-md hover:bg-[#1565C0] transition-colors text-sm font-medium flex items-center gap-2"
+                    >
+                      <Save className="h-4 w-4" />
+                      <span>Save Changes</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Правая панель - Контекст и Управление */}
@@ -1287,26 +2270,26 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                     {ticket.source && (
                       <>
                         <SourceIcon className={`h-4 w-4 ${getSourceIconColor(ticket.source)}`} />
-                        <span className="text-[13px] font-medium text-[#212121]" style={{ wordBreak: 'break-word' }}>
+                        <span className="text-[13px] font-normal text-[#212121]" style={{ wordBreak: 'break-word', fontWeight: 400 }}>
                           {getSourceName(ticket.source, ticket.channel)}
                         </span>
                       </>
                     )}
                     {!ticket.source && (
-                      <span className="text-[13px] font-medium text-[#212121]">Unknown</span>
+                      <span className="text-[13px] font-normal text-[#212121]" style={{ fontWeight: 400 }}>Unknown</span>
                     )}
                   </div>
                 </div>
                 <div className="grid grid-cols-[40%_60%] gap-2 items-start">
                   <div className="text-[13px] font-normal text-[#757575]">Created:</div>
-                  <div className="text-[13px] font-medium text-[#212121]">{formatDate(ticket.createdAt)}</div>
+                  <div className="text-[13px] font-normal text-[#212121]" style={{ fontWeight: 400 }}>{formatDate(ticket.createdAt)}</div>
                 </div>
                 <div className="grid grid-cols-[40%_60%] gap-2 items-start">
                   <div className="text-[13px] font-normal text-[#757575]">Channel:</div>
                   <a
                     href="#"
-                    className="text-[13px] font-medium text-[#1976D2] hover:underline inline-flex items-center gap-1"
-                    style={{ wordBreak: 'break-word' }}
+                    className="text-[13px] font-normal text-[#1976D2] hover:underline inline-flex items-center gap-1"
+                    style={{ wordBreak: 'break-word', fontWeight: 400 }}
                   >
                     <span className="truncate">{ticket.channel}</span>
                     <ExternalLink className="h-3 w-3 flex-shrink-0 text-gray-500" />
@@ -1339,7 +2322,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                     return (
                       <div key={index} className="grid grid-cols-[40%_60%] gap-2 items-start">
                         <div className="text-[13px] font-normal text-[#757575]">{field.label}:</div>
-                        <div className="text-[13px] font-medium text-[#212121]" style={{ wordBreak: 'break-word' }}>
+                        <div className="text-[13px] font-normal text-[#212121]" style={{ wordBreak: 'break-word', fontWeight: 400 }}>
                           {isUrl ? (
                             <a
                               href={field.value}

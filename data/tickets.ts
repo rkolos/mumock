@@ -16,6 +16,9 @@ export interface Ticket {
   aiTitle?: string
   source?: 'discord' | 'telegram' | 'whatsapp' | 'web'
   waitTimeHours?: number
+  // Notification fields
+  unread_messages_count?: number
+  has_private_mention?: boolean
   // Custom fields from widget
   custom_fields?: Array<{
     label: string
@@ -23,6 +26,13 @@ export interface Ticket {
     type: 'text' | 'email' | 'link'
     copyable?: boolean
     displayText?: string
+  }>
+  // User Dossier fields
+  dossier_content?: string
+  dossier_attachments?: Array<{
+    name: string
+    url: string
+    type: 'image' | 'pdf' | 'other'
   }>
 }
 
@@ -41,6 +51,31 @@ export const mockTickets: Ticket[] = [
     aiTitle: 'Ошибка при оплате через Stripe',
     source: 'discord',
     waitTimeHours: 2.25,
+    unread_messages_count: 3,
+    has_private_mention: true,
+    // Сценарий А: Заполненное досье
+    dossier_content: `# Основная информация
+
+- **VIP Клиент** (Tier 3)
+- Предпочитает общение в Telegram
+
+> ⚠ Внимание: Требует проверку IP при каждом выводе средств.
+
+![Документ](https://placehold.co/600x400/E0E0E0/9E9E9E?text=Passport+Scan)
+
+[Скачать договор.pdf](contract.pdf)`,
+    dossier_attachments: [
+      {
+        name: 'contract.pdf',
+        url: 'contract.pdf',
+        type: 'pdf',
+      },
+      {
+        name: 'passport_scan.jpg',
+        url: 'https://placehold.co/600x400/E0E0E0/9E9E9E?text=Passport+Scan',
+        type: 'image',
+      },
+    ],
   },
   {
     id: '2',
@@ -57,6 +92,8 @@ export const mockTickets: Ticket[] = [
     aiTitle: 'Login failed',
     source: 'web',
     waitTimeHours: 0.5,
+    unread_messages_count: 1,
+    // Сценарий Б: Пустое досье (для режима редактирования)
     custom_fields: [
       {
         label: 'User Email',
@@ -95,6 +132,7 @@ export const mockTickets: Ticket[] = [
     aiTitle: 'Не выдалась роль после буста',
     source: 'discord',
     waitTimeHours: 5.0,
+    has_private_mention: true,
   },
   {
     id: '4',
