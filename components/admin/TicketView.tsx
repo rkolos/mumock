@@ -934,7 +934,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                           message.authorId === 'user'
                             ? 'bg-white text-gray-700'
                             : message.authorId === 'admin'
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-blue-50 text-gray-700'
                             : 'bg-white text-gray-700'
                         }`}
                       >
@@ -943,9 +943,9 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                         {message.authorId === 'admin' && (
                           <div className="flex items-center gap-1.5 mt-1 justify-end">
                             {message.edited && (
-                              <span className="text-xs opacity-70 italic">(edited)</span>
+                              <span className="text-xs text-gray-500 italic">(edited)</span>
                             )}
-                            <span className="text-xs opacity-70">{formatTime(message.timestamp)}</span>
+                            <span className="text-xs text-gray-500">{formatTime(message.timestamp)}</span>
                           </div>
                         )}
                         {/* Время и edited для пользователя (если не в заголовке) */}
