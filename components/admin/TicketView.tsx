@@ -47,6 +47,8 @@ import {
   List,
   Folder,
   Save,
+  Languages,
+  RotateCcw,
 } from 'lucide-react'
 import { mockTickets, Ticket } from '../../data/tickets'
 import { mockTags } from '../../data/tags'
@@ -79,6 +81,9 @@ interface Message {
     url: string
     thumbnail?: string
   }
+  translatedContent?: string
+  translatedTo?: string
+  isTranslated?: boolean
 }
 
 interface TicketViewProps {
@@ -162,6 +167,42 @@ export default function TicketView({ ticketId }: TicketViewProps) {
   const dossierEditorRef = useRef<HTMLTextAreaElement>(null)
   const dossierFileInputRef = useRef<HTMLInputElement>(null)
 
+  // Состояния для перевода
+  const [ticketTargetLanguage, setTicketTargetLanguage] = useState<string | null>(null)
+  const [translatedMessages, setTranslatedMessages] = useState<{ [messageId: string]: { content: string; targetLang: string } }>({})
+  const [isTranslatingMessage, setIsTranslatingMessage] = useState<string | null>(null)
+  const [translationLangMenuOpen, setTranslationLangMenuOpen] = useState(false)
+  const translationLangMenuRef = useRef<HTMLDivElement>(null)
+  const [originalInputText, setOriginalInputText] = useState<string | null>(null)
+  const [isTranslatingInput, setIsTranslatingInput] = useState(false)
+  const [translatedInputText, setTranslatedInputText] = useState<string | null>(null)
+  const messageTextareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Язык интерфейса админа (по умолчанию русский)
+  const adminInterfaceLang = 'ru'
+
+  // Список доступных языков для перевода
+  const availableLanguages = [
+    { code: 'en', name: 'English' },
+    { code: 'ru', name: 'Русский' },
+    { code: 'es', name: 'Español' },
+    { code: 'de', name: 'Deutsch' },
+    { code: 'fr', name: 'Français' },
+    { code: 'it', name: 'Italiano' },
+    { code: 'pt', name: 'Português' },
+    { code: 'ja', name: '日本語' },
+    { code: 'ko', name: '한국어' },
+    { code: 'zh', name: '中文' },
+  ]
+
+  // Сброс состояния перевода при смене тикета
+  useEffect(() => {
+    setTicketTargetLanguage(null)
+    setTranslatedMessages({})
+    setOriginalInputText(null)
+    setTranslatedInputText(null)
+  }, [ticketId])
+
   // Синхронизация состояния досье при изменении тикета
   useEffect(() => {
     if (ticket) {
@@ -169,7 +210,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
       setDossierAttachments(ticket.dossier_attachments || [])
       setIsDossierEditMode(false)
     }
-  }, [ticket?.id])
+  }, [ticketId])
 
   // Эффект для триггера анимации pulse при изменении счетчика уведомлений
   useEffect(() => {
@@ -229,19 +270,138 @@ export default function TicketView({ ticketId }: TicketViewProps) {
           }
         }
       }
+      // Закрытие меню выбора языка перевода
+      if (
+        translationLangMenuRef.current &&
+        !translationLangMenuRef.current.contains(event.target as Node)
+      ) {
+        setTranslationLangMenuOpen(false)
+      }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [messageContextMenuOpen, emojiPickerOpen])
+  }, [messageContextMenuOpen, emojiPickerOpen, translationLangMenuOpen])
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessageText(e.target.value)
+    const newValue = e.target.value
+    setMessageText(newValue)
     // Автоматическое увеличение высоты
     e.target.style.height = 'auto'
     e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`
+    
+    // Если текст был изменен после перевода, сбрасываем состояние перевода
+    if (translatedInputText && newValue !== translatedInputText) {
+      setOriginalInputText(null)
+      setTranslatedInputText(null)
+    }
+  }
+
+  // API функция для перевода текста
+  const translateText = async (text: string, targetLang: string): Promise<string> => {
+    // TODO: Заменить на реальный API вызов
+    // Моковый перевод для демонстрации
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    const translations: { [key: string]: { [key: string]: string } } = {
+      'No me funciona el pago': {
+        ru: 'У меня не работает оплата',
+        en: 'Payment is not working for me',
+      },
+      'Попробуйте перезагрузить.': {
+        de: 'Versuchen Sie einen Neustart.',
+        es: 'Intente reiniciar.',
+        en: 'Try restarting.',
+      },
+      'Какую ошибку вы видите?': {
+        es: '¿Qué error ves?',
+        en: 'What error do you see?',
+      },
+      'Пришлите скриншот': {
+        es: 'Envía una captura de pantalla',
+        en: 'Send a screenshot',
+      },
+      'Проверьте настройки роутера': {
+        en: 'Check your router settings',
+      },
+      'Проверьте настройки роутера.': {
+        en: 'Check your router settings.',
+      },
+    }
+    
+    const translation = translations[text]?.[targetLang]
+    if (translation) {
+      return translation
+    }
+    
+    // Возвращаем оригинальный текст, если нет готового перевода
+    // (в реальной реализации здесь будет вызов API перевода)
+    return text
+  }
+
+  // Перевод входящего сообщения (от пользователя к админу)
+  const handleTranslateIncomingMessage = async (messageId: string, messageContent: string) => {
+    setIsTranslatingMessage(messageId)
+    try {
+      const translated = await translateText(messageContent, adminInterfaceLang)
+      setTranslatedMessages(prev => ({
+        ...prev,
+        [messageId]: { content: translated, targetLang: adminInterfaceLang }
+      }))
+    } catch (error) {
+      console.error('Translation error:', error)
+    } finally {
+      setIsTranslatingMessage(null)
+    }
+  }
+
+  // Показать оригинал сообщения
+  const handleShowOriginalMessage = (messageId: string) => {
+    setTranslatedMessages(prev => {
+      const newState = { ...prev }
+      delete newState[messageId]
+      return newState
+    })
+  }
+
+  // Перевод исходящего сообщения (от админа к пользователю)
+  const handleTranslateOutgoingMessage = async (targetLang: string) => {
+    if (!messageText.trim()) return
+    
+    setIsTranslatingInput(true)
+    // Сохраняем оригинальный текст только если его еще нет (первый перевод)
+    if (originalInputText === null) {
+      setOriginalInputText(messageText)
+    }
+    
+    try {
+      // Переводим оригинальный текст, если он есть, иначе текущий текст в поле
+      const textToTranslate = originalInputText || messageText
+      const translated = await translateText(textToTranslate, targetLang)
+      setMessageText(translated)
+      setTranslatedInputText(translated)
+      setTicketTargetLanguage(targetLang)
+    } catch (error) {
+      console.error('Translation error:', error)
+    } finally {
+      setIsTranslatingInput(false)
+    }
+  }
+
+  // Отмена перевода в поле ввода
+  const handleRevertTranslation = () => {
+    if (originalInputText !== null) {
+      setMessageText(originalInputText)
+      setOriginalInputText(null)
+      setTranslatedInputText(null)
+    }
+  }
+
+  // Получить название языка по коду
+  const getLanguageName = (code: string): string => {
+    return availableLanguages.find(lang => lang.code === code)?.name || code.toUpperCase()
   }
 
   if (!ticket) {
@@ -267,7 +427,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
       id: '2',
       author: ticket.username,
       authorId: 'user',
-      content: 'Здравствуйте! У меня проблема с оплатой.',
+      content: 'No me funciona el pago',
       timestamp: '2025-12-15T10:05:00Z',
       isSystem: false,
     },
@@ -1259,7 +1419,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                       <div
                         className={`px-3 py-2 relative inline-block ${
                           message.authorId === 'user'
-                            ? 'bg-white text-[#212121] shadow-sm'
+                            ? translatedMessages[message.id] ? 'bg-[#FFF8E1] text-[#212121] shadow-sm' : 'bg-white text-[#212121] shadow-sm'
                             : message.authorId === 'admin'
                             ? 'bg-blue-50 text-[#212121]'
                             : 'bg-white text-[#212121] shadow-sm'
@@ -1278,7 +1438,22 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                             className="text-[14px] mb-2 whitespace-pre-wrap"
                             style={{ lineHeight: '1.45' }}
                           >
-                            {message.content}
+                            {translatedMessages[message.id] ? translatedMessages[message.id].content : message.content}
+                          </div>
+                        )}
+                        
+                        {/* Индикатор перевода */}
+                        {translatedMessages[message.id] && (
+                          <div className="mb-2">
+                            <span className="text-[11px] text-gray-500 italic">
+                              Translated to {getLanguageName(translatedMessages[message.id].targetLang)}
+                            </span>
+                            <button
+                              onClick={() => handleShowOriginalMessage(message.id)}
+                              className="ml-2 text-[11px] text-blue-600 hover:text-blue-700 underline"
+                            >
+                              Show Original
+                            </button>
                           </div>
                         )}
 
@@ -1418,6 +1593,21 @@ export default function TicketView({ ticketId }: TicketViewProps) {
 
                       {/* Hover Menu */}
                       <div className={`opacity-0 group-hover:opacity-100 flex items-center gap-1 mt-1 transition-opacity ${message.authorId === 'admin' ? 'flex-row-reverse' : ''}`}>
+                        {/* Кнопка перевода для сообщений пользователя */}
+                        {message.authorId === 'user' && !message.isSystem && !translatedMessages[message.id] && (
+                          <button
+                            onClick={() => handleTranslateIncomingMessage(message.id, message.content)}
+                            disabled={isTranslatingMessage === message.id}
+                            className="p-1.5 hover:bg-gray-200 rounded text-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Translate"
+                          >
+                            {isTranslatingMessage === message.id ? (
+                              <div className="h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <Languages className="h-4 w-4" />
+                            )}
+                          </button>
+                        )}
                         <button
                           className="p-1.5 hover:bg-gray-200 rounded text-gray-500 transition-colors"
                           title="Edit"
@@ -1516,47 +1706,140 @@ export default function TicketView({ ticketId }: TicketViewProps) {
               />
 
               {/* Ввод сообщения */}
-              <div className="bg-white border-t border-gray-200 p-4">
-            <div className="flex items-end gap-2">
-              <button className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0">
-                <Plus className="h-5 w-5 text-gray-500" />
-              </button>
-              <div className="flex-1 relative">
-                <textarea
-                  placeholder={`Message ${ticket.channel}`}
-                  className="w-full resize-none border border-gray-300 rounded-lg px-4 py-2.5 pr-24 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={2}
-                  value={messageText}
-                  onChange={handleTextareaChange}
-                  readOnly={isAiLoading}
-                  style={{ minHeight: '60px', maxHeight: '150px' }}
-                />
-                <div className="absolute right-2 bottom-2 flex items-center gap-1">
-                  {/* Кнопка AI генерации */}
-                  <Tooltip text="Генерация ответа с помощью AI">
-                    <button
-                      onClick={handleGenerateAiResponse}
-                      disabled={isAiLoading}
-                      className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isAiLoading ? (
-                        <div className="h-4 w-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-                      ) : (
-                        <Sparkles className="h-4 w-4 text-[#673AB7]" />
-                      )}
+              <div className={`border-t border-gray-200 ${translatedInputText && ticketTargetLanguage ? 'bg-[#FFF8E1]' : 'bg-white'}`}>
+                <div className="p-4">
+                  <div className="flex items-end gap-2">
+                    <button className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0">
+                      <Plus className="h-5 w-5 text-gray-500" />
                     </button>
-                  </Tooltip>
-                  {/* Кнопка отправки */}
-                  <button
-                    className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
-                    title="Отправить"
-                  >
-                    <Send className="h-4 w-4 text-gray-500" />
-                  </button>
+                    <div className="flex-1 flex flex-col">
+                      {/* Textarea */}
+                      <div className="relative">
+                        <textarea
+                          ref={messageTextareaRef}
+                          placeholder={`Message ${ticket.channel}`}
+                          className="w-full resize-none border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed bg-transparent"
+                          rows={2}
+                          value={messageText}
+                          onChange={handleTextareaChange}
+                          readOnly={isAiLoading || isTranslatingInput}
+                          style={{ 
+                            minHeight: '60px', 
+                            maxHeight: '150px',
+                            paddingRight: '140px'
+                          }}
+                        />
+                        {/* Кнопки управления справа внутри textarea */}
+                        <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                          {/* Кнопка перевода */}
+                          <div className="relative" ref={translationLangMenuRef}>
+                            {ticketTargetLanguage ? (
+                              // Состояние Б: Язык уже выбран
+                              <div className="flex items-center">
+                                <button
+                                  onClick={() => handleTranslateOutgoingMessage(ticketTargetLanguage)}
+                                  disabled={!messageText.trim() || isAiLoading || isTranslatingInput}
+                                  className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                  title={`Перевести на ${getLanguageName(ticketTargetLanguage)}`}
+                                >
+                                  {isTranslatingInput ? (
+                                    <div className="h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                  ) : (
+                                    <>
+                                      <Languages className="h-4 w-4 text-gray-500" />
+                                      <span className="text-xs text-gray-600">To {ticketTargetLanguage.toUpperCase()}</span>
+                                    </>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => setTranslationLangMenuOpen(!translationLangMenuOpen)}
+                                  disabled={isAiLoading || isTranslatingInput}
+                                  className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Изменить язык"
+                                >
+                                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                                </button>
+                              </div>
+                            ) : (
+                              // Состояние А: Язык еще не выбран
+                              <button
+                                onClick={() => setTranslationLangMenuOpen(!translationLangMenuOpen)}
+                                disabled={!messageText.trim() || isAiLoading || isTranslatingInput}
+                                className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Перевести сообщение"
+                              >
+                                <Languages className="h-4 w-4 text-gray-500" />
+                              </button>
+                            )}
+                            
+                            {/* Выпадающее меню выбора языка */}
+                            {translationLangMenuOpen && (
+                              <div className="absolute bottom-full right-0 mb-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                                <div className="py-1">
+                                  {availableLanguages.map((lang) => (
+                                    <button
+                                      key={lang.code}
+                                      onClick={() => {
+                                        setTranslationLangMenuOpen(false)
+                                        handleTranslateOutgoingMessage(lang.code)
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-900 hover:bg-gray-50 transition-colors flex items-center justify-between"
+                                    >
+                                      <span>{lang.name}</span>
+                                      {ticketTargetLanguage === lang.code && (
+                                        <Check className="h-4 w-4 text-blue-600" />
+                                      )}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {/* Кнопка AI генерации */}
+                          <Tooltip text="Генерация ответа с помощью AI">
+                            <button
+                              onClick={handleGenerateAiResponse}
+                              disabled={isAiLoading}
+                              className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {isAiLoading ? (
+                                <div className="h-4 w-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <Sparkles className="h-4 w-4 text-[#673AB7]" />
+                              )}
+                            </button>
+                          </Tooltip>
+                          {/* Кнопка отправки */}
+                          <button
+                            className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
+                            title="Отправить"
+                          >
+                            <Send className="h-4 w-4 text-gray-500" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Translation Meta Footer - аналог футера в сообщении */}
+                      {translatedInputText && ticketTargetLanguage && originalInputText && (
+                        <div className="mt-2 px-4 py-1.5 border-t border-dashed border-gray-300 flex items-center justify-between gap-2">
+                          <span className="text-[11px] text-gray-500 flex-1 min-w-0">
+                            <span className="inline-block truncate">
+                              Original ({adminInterfaceLang.toUpperCase()}): <span className="italic">"{originalInputText}"</span>
+                            </span>
+                          </span>
+                          <button
+                            onClick={handleRevertTranslation}
+                            className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-700 hover:underline transition-colors flex-shrink-0"
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                            <span>Revert</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
             </>
           )}
 

@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  
+  html {
+    color-scheme: light;
+  }
+  
+  body {
+    color-scheme: light;
+    background-color: #FFFFFF;
+    color: #000000;
+  }
+}
+
 @layer utilities {
   .animate-in.fade-in {
     animation: fadeIn 0.2s ease-in-out;

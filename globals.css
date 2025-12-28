@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+  
+  html {
+    color-scheme: light;
+  }
+  
   html,
   body {
     @apply bg-gray-50 text-gray-900;
@@ -10,6 +18,9 @@
     padding: 0;
     height: 100%;
     width: 100%;
+    color-scheme: light;
+    background-color: #FFFFFF;
+    color: #000000;
   }
 
   #__next {

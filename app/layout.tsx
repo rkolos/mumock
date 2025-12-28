@@ -14,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ru" suppressHydrationWarning>
-      <body className="antialiased" suppressHydrationWarning>
+    <html lang="ru" suppressHydrationWarning className="light" style={{ colorScheme: 'light' }}>
+      <body className="antialiased" suppressHydrationWarning style={{ backgroundColor: '#FFFFFF', color: '#000000' }}>
         <WidgetProvider>
           {children}
           <WidgetIntegration />

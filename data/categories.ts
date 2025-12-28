@@ -1,18 +1,45 @@
+export type SourceType = 'discord' | 'web_widget' | 'telegram'
+
+export interface IntegrationConfig {
+  // Discord settings
+  discord_guild_id?: string
+  discord_channel_id?: string
+  discord_category_id?: string
+  welcome_message?: string
+  mention_role?: string
+  
+  // Web Widget settings
+  widget_color?: string
+  widget_title?: string
+  success_text?: string
+  return_url?: string
+  allow_guest_submission?: boolean
+  
+  // Telegram settings
+  telegram_chat_id?: string
+  welcome_command?: string
+}
+
 export interface Category {
   id: string
   name: string
   hasAccess: boolean
   createdAt: string
   organizationId: string
-  discordCategoryId?: string
+  source_type: SourceType
   assignedRoles: string[]
-  discordCategory: boolean
   formFields: FormField[]
   categoryName: string
   ticketNameTemplate: string
   maxOpenTicketsPerUser: number
   maxTickets: number
-  ticketCreateMessage: string
+  priority?: 'low' | 'medium' | 'high'
+  description?: string
+  integration_config: IntegrationConfig
+  // Legacy fields for backward compatibility
+  discordCategoryId?: string
+  discordCategory?: boolean
+  ticketCreateMessage?: string
 }
 
 export interface FormField {
@@ -30,9 +57,8 @@ export const mockCategories: Category[] = [
     hasAccess: true,
     createdAt: '2024-01-15T10:30:00Z',
     organizationId: 'org-123',
-    discordCategoryId: 'discord-123',
+    source_type: 'discord',
     assignedRoles: ['Admin'],
-    discordCategory: true,
     formFields: [
       {
         id: 'field-1',
@@ -53,6 +79,18 @@ export const mockCategories: Category[] = [
     ticketNameTemplate: 'Bug-{num}',
     maxOpenTicketsPerUser: 100,
     maxTickets: 500,
+    priority: 'high',
+    description: 'Категория для багов и технических проблем',
+    integration_config: {
+      discord_guild_id: 'guild-123',
+      discord_channel_id: 'channel-123',
+      discord_category_id: 'discord-123',
+      welcome_message: 'Hello, {username}! A support agent will be with you shortly.',
+      mention_role: 'Support',
+    },
+    // Legacy fields
+    discordCategoryId: 'discord-123',
+    discordCategory: true,
     ticketCreateMessage: 'Hello, {username}! A support agent will be with you shortly.',
   },
   {
@@ -61,13 +99,23 @@ export const mockCategories: Category[] = [
     hasAccess: false,
     createdAt: '2024-01-16T10:30:00Z',
     organizationId: 'org-123',
+    source_type: 'web_widget',
     assignedRoles: [],
-    discordCategory: false,
     formFields: [],
     categoryName: '🗑 Closed',
     ticketNameTemplate: 'Closed-{num}',
     maxOpenTicketsPerUser: 50,
     maxTickets: 200,
+    priority: 'low',
+    integration_config: {
+      widget_color: '#FF0000',
+      widget_title: 'Закрытые тикеты',
+      success_text: 'Спасибо за обращение!',
+      return_url: 'https://example.com',
+      allow_guest_submission: true,
+    },
+    // Legacy fields
+    discordCategory: false,
     ticketCreateMessage: 'Hello, {username}! A support agent will be with you shortly.',
   },
   {
@@ -76,9 +124,8 @@ export const mockCategories: Category[] = [
     hasAccess: true,
     createdAt: '2024-01-17T10:30:00Z',
     organizationId: 'org-123',
-    discordCategoryId: 'discord-456',
+    source_type: 'discord',
     assignedRoles: ['Support', 'Moderator'],
-    discordCategory: true,
     formFields: [
       {
         id: 'field-3',
@@ -92,6 +139,17 @@ export const mockCategories: Category[] = [
     ticketNameTemplate: 'Question-{num}',
     maxOpenTicketsPerUser: 75,
     maxTickets: 300,
+    priority: 'medium',
+    integration_config: {
+      discord_guild_id: 'guild-456',
+      discord_channel_id: 'channel-456',
+      discord_category_id: 'discord-456',
+      welcome_message: 'Hello, {username}! A support agent will be with you shortly.',
+      mention_role: 'Moderator',
+    },
+    // Legacy fields
+    discordCategoryId: 'discord-456',
+    discordCategory: true,
     ticketCreateMessage: 'Hello, {username}! A support agent will be with you shortly.',
   },
 ]
