@@ -52,6 +52,7 @@ import { mockTickets, Ticket } from '../../data/tickets'
 import { mockTags } from '../../data/tags'
 import AiContextBar from './AiContextBar'
 import SourcePreviewModal from './SourcePreviewModal'
+import Tooltip from './Tooltip'
 
 interface Message {
   id: string
@@ -961,24 +962,31 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                     </div>
                     {/* Badge источника с белой обводкой */}
                     {t.source && (
-                      <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-white flex items-center justify-center" style={{ border: '2px solid white' }}>
-                        <TicketSourceIcon className={`h-2.5 w-2.5 ${getSourceIconColor(t.source)}`} />
-                      </div>
+                      <Tooltip text="Иконка источника тикета" asChild>
+                        <div 
+                          className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-white flex items-center justify-center" 
+                          style={{ border: '2px solid white' }}
+                        >
+                          <TicketSourceIcon className={`h-2.5 w-2.5 ${getSourceIconColor(t.source)}`} />
+                        </div>
+                      </Tooltip>
                     )}
                     {/* Индикатор непрочитанного сообщения (красная точка) */}
                     {(t.unread_messages_count ?? 0) > 0 && (
-                      <div 
-                        className="absolute rounded-full"
-                        style={{ 
-                          width: '8px', 
-                          height: '8px', 
-                          backgroundColor: '#D32F2F',
-                          border: '2px solid white',
-                          top: '-2px',
-                          right: '-2px',
-                          zIndex: 10
-                        }}
-                      />
+                      <Tooltip text="Индикатор новых сообщений от пользователя" asChild>
+                        <div 
+                          className="absolute rounded-full"
+                          style={{ 
+                            width: '8px', 
+                            height: '8px', 
+                            backgroundColor: '#D32F2F',
+                            border: '2px solid white',
+                            top: '-2px',
+                            right: '-2px',
+                            zIndex: 10
+                          }}
+                        />
+                      </Tooltip>
                     )}
                   </div>
                   
@@ -990,20 +998,22 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                         {ticketAiTitle}
                       </div>
                       {t.has_private_mention && (
-                        <div 
-                          className="flex-shrink-0 flex items-center justify-center rounded-full mt-0.5"
-                          style={{ 
-                            width: '18px', 
-                            height: '18px',
-                            backgroundColor: '#E3F2FD',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            color: '#1976D2',
-                            lineHeight: '1'
-                          }}
-                        >
-                          @
-                        </div>
+                        <Tooltip text="Индикатор упоминаний юзера в переписке по тикету">
+                          <div 
+                            className="flex-shrink-0 flex items-center justify-center rounded-full mt-0.5"
+                            style={{ 
+                              width: '18px', 
+                              height: '18px',
+                              backgroundColor: '#E3F2FD',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              color: '#1976D2',
+                              lineHeight: '1'
+                            }}
+                          >
+                            @
+                          </div>
+                        </Tooltip>
                       )}
                     </div>
                     
@@ -1061,69 +1071,78 @@ export default function TicketView({ ticketId }: TicketViewProps) {
           <div className="bg-white border-b border-[#E0E0E0] pt-3">
             <div className="flex items-end px-4">
               {/* Public Reply Tab */}
-              <button
-                onClick={() => {
-                  setActiveTab('public')
-                  setPublicReplyNotifications(0)
-                  setPublicReplyPulse(false)
-                }}
-                className="relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
-                style={{
-                  backgroundColor: activeTab === 'public' ? '#F5F7FB' : 'transparent',
-                  color: activeTab === 'public' ? '#212121' : '#757575',
-                  fontWeight: activeTab === 'public' ? 'bold' : 'normal',
-                }}
-              >
-                <MessageCircle className="h-4 w-4" />
-                <span>Public Reply</span>
-                {publicReplyNotifications > 0 && activeTab !== 'public' && (
-                  <span
-                    className={`absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full ${
-                      publicReplyPulse ? 'badge-pulse-red' : ''
-                    }`}
-                    onAnimationEnd={() => setPublicReplyPulse(false)}
-                  />
-                )}
-              </button>
+              <Tooltip text="Переписка по тикету с пользователем">
+                <button
+                  onClick={() => {
+                    setActiveTab('public')
+                    setPublicReplyNotifications(0)
+                    setPublicReplyPulse(false)
+                  }}
+                  className="relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
+                  style={{
+                    backgroundColor: activeTab === 'public' ? '#F5F7FB' : 'transparent',
+                    color: activeTab === 'public' ? '#212121' : '#757575',
+                    fontWeight: activeTab === 'public' ? 'bold' : 'normal',
+                  }}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  <span>Public Reply</span>
+                  {publicReplyNotifications > 0 && activeTab !== 'public' && (
+                    <Tooltip text="Есть новые сообщения от юзера">
+                      <span
+                        className={`absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full ${
+                          publicReplyPulse ? 'badge-pulse-red' : ''
+                        }`}
+                        onAnimationEnd={() => setPublicReplyPulse(false)}
+                      />
+                    </Tooltip>
+                  )}
+                </button>
+              </Tooltip>
 
               {/* Team Chat Tab */}
-              <button
-                onClick={() => {
-                  setActiveTab('team')
-                  setTeamChatNotifications(0)
-                  setTeamChatPulse(false)
-                }}
-                className="relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
-                style={{
-                  backgroundColor: activeTab === 'team' ? '#FFFDF5' : 'transparent',
-                  color: activeTab === 'team' ? '#212121' : '#757575',
-                  fontWeight: activeTab === 'team' ? 'bold' : 'normal',
-                }}
-              >
-                <Lock className="h-4 w-4" />
-                <span>Team Chat</span>
-                {teamChatNotifications > 0 && activeTab !== 'team' && (
-                  <span
-                    className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1.5 bg-[#1976D2] text-white text-[10px] font-semibold rounded-full flex items-center justify-center ${
-                      teamChatPulse ? 'badge-pulse-blue' : ''
-                    }`}
-                    onAnimationEnd={() => setTeamChatPulse(false)}
-                  >
-                    {teamChatNotifications}
-                  </span>
-                )}
-              </button>
+              <Tooltip text="Приватная переписка по тикету между админами">
+                <button
+                  onClick={() => {
+                    setActiveTab('team')
+                    setTeamChatNotifications(0)
+                    setTeamChatPulse(false)
+                  }}
+                  className="relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
+                  style={{
+                    backgroundColor: activeTab === 'team' ? '#FFFDF5' : 'transparent',
+                    color: activeTab === 'team' ? '#212121' : '#757575',
+                    fontWeight: activeTab === 'team' ? 'bold' : 'normal',
+                  }}
+                >
+                  <Lock className="h-4 w-4" />
+                  <span>Team Chat</span>
+                  {teamChatNotifications > 0 && activeTab !== 'team' && (
+                    <Tooltip text="Есть непрочитанные сообщения в админском чате">
+                      <span
+                        className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1.5 bg-[#1976D2] text-white text-[10px] font-semibold rounded-full flex items-center justify-center ${
+                          teamChatPulse ? 'badge-pulse-blue' : ''
+                        }`}
+                        onAnimationEnd={() => setTeamChatPulse(false)}
+                      >
+                        {teamChatNotifications}
+                      </span>
+                    </Tooltip>
+                  )}
+                </button>
+              </Tooltip>
 
               {/* User Dossier Tab */}
-              <button
-                onClick={() => setActiveTab('dossier')}
-                className="relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
-                style={{
-                  backgroundColor: activeTab === 'dossier' ? '#FFFFFF' : 'transparent',
-                  color: activeTab === 'dossier' ? '#212121' : '#757575',
-                  fontWeight: activeTab === 'dossier' ? 'bold' : 'normal',
-                }}
-              >
+              <Tooltip text="Статья с заметками о пользователе создавшем тикет">
+                <button
+                  onClick={() => setActiveTab('dossier')}
+                  className="relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
+                  style={{
+                    backgroundColor: activeTab === 'dossier' ? '#FFFFFF' : 'transparent',
+                    color: activeTab === 'dossier' ? '#212121' : '#757575',
+                    fontWeight: activeTab === 'dossier' ? 'bold' : 'normal',
+                  }}
+                >
                 {(() => {
                   const hasContent = ticket?.dossier_content && ticket.dossier_content.trim().length > 0
                   const hasAttachments = ticket?.dossier_attachments && ticket.dossier_attachments.length > 0
@@ -1138,6 +1157,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                 })()}
                 <span>User Dossier</span>
               </button>
+              </Tooltip>
             </div>
           </div>
 
@@ -1513,18 +1533,19 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                 />
                 <div className="absolute right-2 bottom-2 flex items-center gap-1">
                   {/* Кнопка AI генерации */}
-                  <button
-                    onClick={handleGenerateAiResponse}
-                    disabled={isAiLoading}
-                    className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Generate AI Reply"
-                  >
-                    {isAiLoading ? (
-                      <div className="h-4 w-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <Sparkles className="h-4 w-4 text-[#673AB7]" />
-                    )}
-                  </button>
+                  <Tooltip text="Генерация ответа с помощью AI">
+                    <button
+                      onClick={handleGenerateAiResponse}
+                      disabled={isAiLoading}
+                      className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isAiLoading ? (
+                        <div className="h-4 w-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <Sparkles className="h-4 w-4 text-[#673AB7]" />
+                      )}
+                    </button>
+                  </Tooltip>
                   {/* Кнопка отправки */}
                   <button
                     className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
@@ -2306,10 +2327,11 @@ export default function TicketView({ ticketId }: TicketViewProps) {
 
             {/* Секция "Source Data" */}
             {ticket.custom_fields && ticket.custom_fields.length > 0 && (
-              <div className="mb-6">
-                <div className="text-[11px] font-bold text-[#9E9E9E] uppercase mb-2" style={{ letterSpacing: '0.5px' }}>
-                  Source Data
-                </div>
+              <Tooltip text="Данные о пользователе из источника тикета">
+                <div className="mb-6">
+                  <div className="text-[11px] font-bold text-[#9E9E9E] uppercase mb-2" style={{ letterSpacing: '0.5px' }}>
+                    Source Data
+                  </div>
                 <div className="space-y-1">
                   {ticket.custom_fields.map((field, index) => {
                     const handleCopy = () => {
@@ -2362,7 +2384,8 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                     )
                   })}
                 </div>
-              </div>
+                </div>
+              </Tooltip>
             )}
 
             {/* Секция "Bot Information" */}
