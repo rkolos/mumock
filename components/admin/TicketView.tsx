@@ -184,6 +184,23 @@ export default function TicketView({ ticketId }: TicketViewProps) {
   const [macrosMenuOpen, setMacrosMenuOpen] = useState(false)
   const macrosMenuRef = useRef<HTMLDivElement>(null)
 
+  // Состояния для AI Smart Summary
+  const [isSummaryVisible, setIsSummaryVisible] = useState(false)
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false)
+  const [aiSummary, setAiSummary] = useState<{
+    text: string | null
+    currentState: string | null
+    sentiment: 'positive' | 'neutral' | 'negative' | null
+    lastMessageId: string | null
+    generatedAt: number | null
+  }>({
+    text: null,
+    currentState: null,
+    sentiment: null,
+    lastMessageId: null,
+    generatedAt: null,
+  })
+
   // Язык интерфейса админа (по умолчанию русский)
   const adminInterfaceLang = 'ru'
 
@@ -861,6 +878,167 @@ export default function TicketView({ ticketId }: TicketViewProps) {
     setIsSourceModalOpen(true)
   }
 
+  // Mock функция для генерации AI Summary (возвращает простой текст)
+  const generateAISummary = async (
+    ticketId: string,
+    messages: Message[]
+  ): Promise<string> => {
+    // Имитация задержки API
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+
+    // Анализ последних сообщений
+    const recentMessages = messages.slice(-10)
+    const userMessages = recentMessages.filter((m) => !m.isSystem && m.authorId === 'user')
+    const adminMessages = recentMessages.filter((m) => !m.isSystem && m.authorId !== 'user' && m.authorId !== 'system')
+    const lastMessage = messages[messages.length - 1]
+
+    // Генерация текста саммари (как модель вернет)
+    const summaryPoints: string[] = []
+    
+    if (userMessages.length > 0) {
+      const firstUserMessage = userMessages[0]
+      summaryPoints.push(`• Пользователь сообщил: "${firstUserMessage.content.substring(0, 100)}${firstUserMessage.content.length > 100 ? '...' : ''}"`)
+    }
+
+    if (adminMessages.length > 0) {
+      summaryPoints.push(`• Поддержка ответила ${adminMessages.length} раз(а)`)
+    }
+
+    if (lastMessage?.images && lastMessage.images.length > 0) {
+      summaryPoints.push(`• Приложено ${lastMessage.images.length} изображений`)
+    }
+
+    if (lastMessage?.files && lastMessage.files.length > 0) {
+      summaryPoints.push(`• Приложено ${lastMessage.files.length} файлов`)
+    }
+
+    const summary = summaryPoints.length > 0 
+      ? summaryPoints.join('\n')
+      : '• Анализ тикета в процессе'
+
+    // Определение текущего состояния
+    let currentState = 'Тикет открыт'
+    if (lastMessage) {
+      if (lastMessage.authorId === 'user') {
+        currentState = 'Ожидается ответ от поддержки'
+      } else if (lastMessage.authorId !== 'user' && !lastMessage.isSystem) {
+        currentState = 'Ожидается ответ от пользователя'
+      } else if (lastMessage.isSystem) {
+        currentState = 'Тикет в обработке'
+      }
+    }
+
+    // Определение sentiment на основе ключевых слов
+    const negativeKeywords = ['ошибка', 'error', 'не работает', 'проблема', 'плохо', 'bad', 'broken', 'fails', 'не могу', 'cannot']
+    const positiveKeywords = ['спасибо', 'thanks', 'работает', 'works', 'хорошо', 'good', 'решил', 'solved', 'помогло', 'helped']
+
+    const allText = recentMessages.map((m) => m.content.toLowerCase()).join(' ')
+    const negativeCount = negativeKeywords.filter((kw) => allText.includes(kw.toLowerCase())).length
+    const positiveCount = positiveKeywords.filter((kw) => allText.includes(kw.toLowerCase())).length
+
+    let sentiment = 'neutral'
+    if (negativeCount > positiveCount) {
+      sentiment = 'negative'
+    } else if (positiveCount > negativeCount) {
+      sentiment = 'positive'
+    }
+
+    // Возвращаем простой текст, как модель вернет
+    return `${summary}\n\nCurrent State: ${currentState}\n\nSentiment: ${sentiment}`
+  }
+
+  // Функция парсинга текста саммари для извлечения структурированных данных
+  const parseSummaryText = (text: string): {
+    summary: string
+    currentState: string
+    sentiment: 'positive' | 'neutral' | 'negative'
+  } => {
+    // Извлекаем Current State
+    const currentStateMatch = text.match(/Current State:\s*(.+?)(?:\n|$)/i)
+    const currentState = currentStateMatch ? currentStateMatch[1].trim() : 'Тикет в обработке'
+
+    // Извлекаем Sentiment
+    const sentimentMatch = text.match(/Sentiment:\s*(positive|neutral|negative)/i)
+    const sentiment = (sentimentMatch ? sentimentMatch[1].toLowerCase() : 'neutral') as 'positive' | 'neutral' | 'negative'
+
+    // Извлекаем Summary (все до "Current State")
+    const summaryMatch = text.split(/Current State:/i)[0]
+    const summary = summaryMatch ? summaryMatch.trim() : text
+
+    return {
+      summary,
+      currentState,
+      sentiment,
+    }
+  }
+
+  // Обработчик переключения видимости панели саммари
+  const handleSummaryToggle = async () => {
+    if (isSummaryVisible) {
+      setIsSummaryVisible(false)
+      return
+    }
+
+    setIsSummaryVisible(true)
+
+    // Получаем ID последнего сообщения
+    const currentLastMessageId = messages.length > 0 ? messages[messages.length - 1]?.id : null
+
+    // Проверяем актуальность данных
+    if (
+      aiSummary.text &&
+      aiSummary.lastMessageId === currentLastMessageId &&
+      currentLastMessageId !== null
+    ) {
+      // Данные актуальны - просто показываем
+      return
+    }
+
+    // Данные устарели или отсутствуют - генерируем новые
+    setIsSummaryLoading(true)
+    try {
+      const textResponse = await generateAISummary(ticketId, messages)
+      const parsed = parseSummaryText(textResponse)
+      setAiSummary({
+        text: parsed.summary,
+        currentState: parsed.currentState,
+        sentiment: parsed.sentiment,
+        lastMessageId: currentLastMessageId,
+        generatedAt: Date.now(),
+      })
+    } catch (error) {
+      console.error('Error generating AI summary:', error)
+    } finally {
+      setIsSummaryLoading(false)
+    }
+  }
+
+  // Обработчик принудительного обновления саммари
+  const handleRefreshSummary = async () => {
+    setIsSummaryLoading(true)
+    try {
+      const textResponse = await generateAISummary(ticketId, messages)
+      const currentLastMessageId = messages.length > 0 ? messages[messages.length - 1]?.id : null
+      const parsed = parseSummaryText(textResponse)
+      setAiSummary({
+        text: parsed.summary,
+        currentState: parsed.currentState,
+        sentiment: parsed.sentiment,
+        lastMessageId: currentLastMessageId,
+        generatedAt: Date.now(),
+      })
+    } catch (error) {
+      console.error('Error refreshing AI summary:', error)
+    } finally {
+      setIsSummaryLoading(false)
+    }
+  }
+
+  // Обработчик закрытия панели
+  const handleCloseSummary = () => {
+    setIsSummaryVisible(false)
+  }
+
   if (!ticket) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -1290,7 +1468,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
           }}
         >
           {/* Панель вкладок */}
-          <div className="bg-white border-b border-[#E0E0E0] pt-3">
+          <div className="bg-white border-b border-[#E0E0E0] pt-3 relative">
             <div className="flex items-end px-4">
               {/* Public Reply Tab */}
               <Tooltip text="Переписка по тикету с пользователем">
@@ -1380,7 +1558,140 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                 <span>User Dossier</span>
               </button>
               </Tooltip>
+
+              {/* Кнопка AI Summary - в правом нижнем углу панели вкладок */}
+              <div className="ml-auto flex items-center gap-2 pb-2">
+                {isSummaryVisible && (
+                  <div className="flex items-center gap-1 text-xs text-purple-600 mr-1">
+                    <ChevronDown className="h-3 w-3" />
+                  </div>
+                )}
+                <Tooltip text="Generate AI Summary">
+                  <button
+                    onClick={handleSummaryToggle}
+                    className={`p-2 rounded transition-all ${
+                      isSummaryVisible
+                        ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                        : 'hover:bg-gray-100 text-purple-600'
+                    }`}
+                    title="Generate AI Summary"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </button>
+                </Tooltip>
+              </div>
             </div>
+          </div>
+
+          {/* Smart Header - AI Summary Panel */}
+          <div
+            className={`bg-purple-50 border-b border-purple-200 transition-all duration-300 ease-in-out overflow-hidden ${
+              isSummaryVisible ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+            }`}
+            style={{ backgroundColor: '#F3E5F5' }}
+          >
+            {isSummaryVisible && (
+              <div className="p-4">
+                {isSummaryLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Skeleton Loader */}
+                    <div className="space-y-2">
+                      <div className="h-4 bg-purple-200 rounded w-24 animate-pulse"></div>
+                      <div className="h-3 bg-purple-200 rounded w-full animate-pulse"></div>
+                      <div className="h-3 bg-purple-200 rounded w-3/4 animate-pulse"></div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-purple-200 rounded w-28 animate-pulse"></div>
+                      <div className="h-3 bg-purple-200 rounded w-full animate-pulse"></div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-purple-200 rounded w-20 animate-pulse"></div>
+                      <div className="flex gap-2">
+                        <div className="h-6 bg-purple-200 rounded w-16 animate-pulse"></div>
+                      </div>
+                    </div>
+                  </div>
+                ) : aiSummary.text ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Блок A: Issue Summary */}
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-bold text-purple-700">🪄 Issue Summary</span>
+                      </div>
+                      <div className="text-sm text-gray-700 whitespace-pre-line space-y-1">
+                        {aiSummary.text.split('\n').map((line, idx) => (
+                          <div key={idx} className={line.trim() ? '' : ''}>
+                            {line}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Блок B: Current State */}
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-bold text-gray-700">📍 Current State</span>
+                      </div>
+                      <div className="text-sm text-gray-700">{aiSummary.currentState}</div>
+                    </div>
+
+                    {/* Блок C: Sentiment & Actions */}
+                    <div className="flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs font-bold text-gray-700">Sentiment</span>
+                        </div>
+                        {aiSummary.sentiment && (
+                          <div
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium ${
+                              aiSummary.sentiment === 'negative'
+                                ? 'bg-red-100 text-red-700'
+                                : aiSummary.sentiment === 'positive'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            <span>
+                              {aiSummary.sentiment === 'negative'
+                                ? '🤬'
+                                : aiSummary.sentiment === 'positive'
+                                ? '😊'
+                                : '😐'}
+                            </span>
+                            <span className="capitalize">{aiSummary.sentiment}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-4 justify-end">
+                        <Tooltip text="Refresh Summary">
+                          <button
+                            onClick={handleRefreshSummary}
+                            disabled={isSummaryLoading}
+                            className="p-1.5 hover:bg-purple-100 rounded transition-colors disabled:opacity-50"
+                            title="Refresh Summary"
+                          >
+                            <RefreshCw className="h-4 w-4 text-purple-600" />
+                          </button>
+                        </Tooltip>
+                        <Tooltip text="Close">
+                          <button
+                            onClick={handleCloseSummary}
+                            className="p-1.5 hover:bg-purple-100 rounded transition-colors"
+                            title="Close"
+                          >
+                            <X className="h-4 w-4 text-purple-600" />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500 text-center py-2">
+                    No summary available
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Режим: Public Reply */}
