@@ -4,10 +4,15 @@ import { useState, useEffect, useRef } from 'react'
 import { Paperclip, X, CheckCircle2, Bot, AlertCircle } from 'lucide-react'
 import config from '../widget-config.json'
 import { useWidget } from '../../../contexts/WidgetContext'
+import { NavigationParams, FormField, TicketCategory } from '../../../types/widget'
+
+// Тип для полей из JSON конфигурации (type как string)
+type ConfigFormField = Omit<FormField, 'type'> & { type: string }
+type ConfigTicketCategory = Omit<TicketCategory, 'fields'> & { fields: ConfigFormField[] }
 
 interface TicketFormProps {
-  onNavigate: (view: string, params?: any) => void
-  params?: any
+  onNavigate: (view: string, params?: NavigationParams) => void
+  params?: NavigationParams
 }
 
 interface File {
@@ -20,11 +25,11 @@ interface File {
 
 export default function TicketForm({ onNavigate, params = {} }: TicketFormProps) {
   const { createTicket, showToast, closeWidget } = useWidget()
-  const categories = config.ticket_categories
-  const globalFields = config.ticket_global_fields || []
+  const categories = config.ticket_categories as Record<string, ConfigTicketCategory>
+  const globalFields = (config.ticket_global_fields || []) as ConfigFormField[]
   
   const [selectedCategory, setSelectedCategory] = useState('general')
-  const [formData, setFormData] = useState<Record<string, any>>({})
+  const [formData, setFormData] = useState<Record<string, string>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [files, setFiles] = useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -37,11 +42,11 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const initialData: Record<string, any> = {}
+    const initialData: Record<string, string> = {}
     let initialCategory = 'general'
     const filledFields = new Set<string>()
     
-    globalFields.forEach((field: any) => {
+    globalFields.forEach((field: ConfigFormField) => {
       if (field.type !== 'file') {
         initialData[field.name] = ''
       }
@@ -73,8 +78,8 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
 
     setSelectedCategory(initialCategory)
 
-    const categoryFields = categories[initialCategory as keyof typeof categories]?.fields || []
-    categoryFields.forEach((field: any) => {
+    const categoryFields = categories[initialCategory]?.fields || []
+    categoryFields.forEach((field: ConfigFormField) => {
       if (!initialData[field.name]) {
         initialData[field.name] = field.type === 'radio' ? '' : ''
       }
@@ -94,11 +99,11 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
   useEffect(() => {
     if (Object.keys(formData).length === 0) return
 
-    const newCategoryFields = categories[selectedCategory as keyof typeof categories]?.fields || []
+    const newCategoryFields = categories[selectedCategory]?.fields || []
     const newData = { ...formData }
 
-    const globalFieldNames = globalFields.map((f: any) => f.name)
-    const preservedData: Record<string, any> = {}
+    const globalFieldNames = globalFields.map((f: ConfigFormField) => f.name)
+    const preservedData: Record<string, string> = {}
     globalFieldNames.forEach(name => {
       if (newData[name] !== undefined) {
         preservedData[name] = newData[name]
@@ -111,7 +116,7 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
       }
     })
 
-    newCategoryFields.forEach((field: any) => {
+    newCategoryFields.forEach((field: ConfigFormField) => {
       if (!newData[field.name]) {
         newData[field.name] = field.type === 'radio' ? '' : ''
       }
@@ -125,7 +130,7 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
       const newSet = new Set(prev)
       const currentFieldNames = [
         ...globalFieldNames,
-        ...newCategoryFields.map((f: any) => f.name)
+        ...newCategoryFields.map((f: ConfigFormField) => f.name)
       ]
       Array.from(newSet).forEach(name => {
         if (!currentFieldNames.includes(name)) {
@@ -166,7 +171,7 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
     }
   }
 
-  const validateField = (field: any, value: any): string => {
+  const validateField = (field: ConfigFormField, value: string): string => {
     const stringValue = String(value || '').trim()
     
     if (field.required && !stringValue) {
@@ -193,7 +198,7 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
     const newErrors: Record<string, string> = {}
     let isValid = true
 
-    globalFields.forEach((field: any) => {
+    globalFields.forEach((field: ConfigFormField) => {
       if (field.type !== 'file' && field.required) {
         const error = validateField(field, formData[field.name] || '')
         if (error) {
@@ -203,8 +208,8 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
       }
     })
 
-    const categoryFields = categories[selectedCategory as keyof typeof categories]?.fields || []
-    categoryFields.forEach((field: any) => {
+    const categoryFields = categories[selectedCategory]?.fields || []
+    categoryFields.forEach((field: ConfigFormField) => {
       const error = validateField(field, formData[field.name] || '')
       if (error) {
         newErrors[field.name] = error
@@ -320,14 +325,14 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
   }
 
   const isFormValid = (): boolean => {
-    const globalValid = globalFields.every((field: any) => {
+    const globalValid = globalFields.every((field: ConfigFormField) => {
       if (field.type === 'file' || !field.required) return true
       const value = formData[field.name] || ''
       return value.trim() && !validateField(field, value)
     })
 
-    const categoryFields = categories[selectedCategory as keyof typeof categories]?.fields || []
-    const categoryValid = categoryFields.every((field: any) => {
+    const categoryFields = categories[selectedCategory]?.fields || []
+    const categoryValid = categoryFields.every((field: ConfigFormField) => {
       if (!field.required) return true
       const value = formData[field.name] || ''
       return value.trim() && !validateField(field, value)
@@ -336,7 +341,7 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
     return globalValid && categoryValid
   }
 
-  const renderField = (field: any) => {
+  const renderField = (field: ConfigFormField) => {
     const value = formData[field.name] || ''
     const error = errors[field.name]
     const isAiFilled = aiFilledFields.has(field.name)
@@ -388,7 +393,7 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
               }`}
             >
               <option value="">Выберите...</option>
-              {field.options?.map((option: any) => (
+              {field.options?.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -419,7 +424,7 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
             )}
           </label>
           <div className={`space-y-2 p-3 rounded-lg ${isAiFilled ? 'bg-blue-50 border border-blue-200' : ''}`}>
-            {field.options?.map((option: any) => (
+            {field.options?.map((option) => (
               <label key={option.value} className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
@@ -550,7 +555,7 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
     )
   }
 
-  const categoryFields = categories[selectedCategory as keyof typeof categories]?.fields || []
+  const categoryFields = categories[selectedCategory]?.fields || []
 
   return (
     <div className="p-3 md:p-4">
@@ -564,7 +569,7 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
             onChange={(e) => handleCategoryChange(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           >
-            {Object.values(categories).map((category: any) => (
+            {Object.values(categories).map((category: ConfigTicketCategory) => (
               <option key={category.id} value={category.id}>
                 {category.label}
               </option>
@@ -589,12 +594,12 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
           </div>
         )}
 
-        {globalFields.map((field: any) => {
+        {globalFields.map((field: ConfigFormField) => {
           if (field.type === 'file') return null
           return renderField(field)
         })}
 
-        {categoryFields.map((field: any) => renderField(field))}
+        {categoryFields.map((field: ConfigFormField) => renderField(field))}
 
         {config.features.enableAttachments && (
           <div>

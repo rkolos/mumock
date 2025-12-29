@@ -8,8 +8,9 @@ import SearchResults from './Views/SearchResults'
 import TicketForm from './Views/TicketForm'
 import AIChat from './Views/AIChat'
 import ArticleView from './Views/ArticleView'
+import { ViewComponentProps } from '../../types/widget'
 
-const VIEWS: Record<string, React.ComponentType<any>> = {
+const VIEWS: Record<string, React.ComponentType<ViewComponentProps>> = {
   HOME: HomeView,
   SEARCH_RESULTS: SearchResults,
   TICKET_FORM: TicketForm,
@@ -24,15 +25,15 @@ interface WidgetRootProps {
 
 export default function WidgetRoot({ isOpen, onClose }: WidgetRootProps) {
   const [currentView, setCurrentView] = useState(config.navigation.initialView)
-  const [viewParams, setViewParams] = useState<any>({})
+  const [viewParams, setViewParams] = useState<ViewComponentProps['params']>({})
 
-  const handleNavigate = (viewName: string, params: any = {}) => {
+  const handleNavigate = (viewName: string, params: ViewComponentProps['params'] = {}) => {
     setCurrentView(viewName)
     setViewParams(params)
   }
 
   const handleBack = () => {
-    if (currentView === 'ARTICLE_VIEW' && viewParams.searchQuery && viewParams.filteredArticles) {
+    if (currentView === 'ARTICLE_VIEW' && viewParams?.searchQuery && viewParams?.filteredArticles) {
       handleNavigate('SEARCH_RESULTS', { 
         searchQuery: viewParams.searchQuery, 
         filteredArticles: viewParams.filteredArticles 
@@ -50,7 +51,7 @@ export default function WidgetRoot({ isOpen, onClose }: WidgetRootProps) {
     onClose()
   }
 
-  const viewConfig = (config.navigation.views as any)[currentView] || (config.navigation.views as any).HOME
+  const viewConfig = config.navigation.views[currentView as keyof typeof config.navigation.views] || config.navigation.views.HOME
   const CurrentViewComponent = VIEWS[currentView] || HomeView
 
   const showBackButton = currentView === 'ARTICLE_VIEW'
@@ -88,8 +89,8 @@ export default function WidgetRoot({ isOpen, onClose }: WidgetRootProps) {
         >
           <CurrentViewComponent 
             onNavigate={handleNavigate} 
-            params={viewParams}
-            article={viewParams.article}
+            params={viewParams || {}}
+            article={viewParams?.article}
           />
         </Layout>
       </div>

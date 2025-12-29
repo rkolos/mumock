@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { FileText } from 'lucide-react'
 import config from '../widget-config.json'
+import { NavigationParams, Article } from '../../../types/widget'
 
 interface ArticleViewProps {
-  article?: any
-  onNavigate: (view: string, params?: any) => void
-  params?: any
+  article?: Article
+  onNavigate: (view: string, params?: NavigationParams) => void
+  params?: NavigationParams
 }
 
 export default function ArticleView({ article, onNavigate, params = {} }: ArticleViewProps) {
@@ -35,10 +36,10 @@ export default function ArticleView({ article, onNavigate, params = {} }: Articl
   const filteredArticles = params.filteredArticles || []
 
   const relatedArticles = filteredArticles
-    .filter((a: any) => a.id !== article.id)
+    .filter((a: Article) => a.id !== article.id)
     .slice(0, 3)
 
-  const handleRelatedArticleClick = (relatedArticle: any) => {
+  const handleRelatedArticleClick = (relatedArticle: Article) => {
     setIsTransitioning(true)
     setTimeout(() => {
       onNavigate('ARTICLE_VIEW', { 
@@ -78,7 +79,7 @@ export default function ArticleView({ article, onNavigate, params = {} }: Articl
         <div className="mt-6 pt-6 border-t border-gray-200">
           <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-3">Другие результаты по вашему запросу</h2>
           <div className="space-y-2">
-            {relatedArticles.map((relatedArticle: any) => (
+            {relatedArticles.map((relatedArticle: Article) => (
               <div
                 key={relatedArticle.id}
                 onClick={() => handleRelatedArticleClick(relatedArticle)}

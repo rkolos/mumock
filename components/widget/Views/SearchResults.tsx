@@ -3,10 +3,11 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Search } from 'lucide-react'
 import config from '../widget-config.json'
+import { NavigationParams, Article } from '../../../types/widget'
 
 interface SearchResultsProps {
-  onNavigate: (view: string, params?: any) => void
-  params?: any
+  onNavigate: (view: string, params?: NavigationParams) => void
+  params?: NavigationParams
 }
 
 export default function SearchResults({ onNavigate, params = {} }: SearchResultsProps) {
@@ -19,7 +20,7 @@ export default function SearchResults({ onNavigate, params = {} }: SearchResults
     }
     
     const query = searchQuery.toLowerCase().trim()
-    return initialArticles.filter((article: any) => 
+    return initialArticles.filter((article: Article) => 
       article.title.toLowerCase().includes(query) ||
       article.snippet.toLowerCase().includes(query)
     )
@@ -31,7 +32,7 @@ export default function SearchResults({ onNavigate, params = {} }: SearchResults
     }
   }, [params.searchQuery])
 
-  const handleArticleClick = (article: any) => {
+  const handleArticleClick = (article: Article) => {
     onNavigate('ARTICLE_VIEW', { article, searchQuery, filteredArticles })
   }
 
@@ -59,7 +60,7 @@ export default function SearchResults({ onNavigate, params = {} }: SearchResults
         </p>
       </div>
       <div className="space-y-3">
-        {filteredArticles.map((article: any) => (
+        {filteredArticles.map((article: Article) => (
           <div
             key={article.id}
             onClick={() => handleArticleClick(article)}

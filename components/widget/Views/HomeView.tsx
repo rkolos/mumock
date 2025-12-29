@@ -4,9 +4,10 @@ import { useState, useMemo, useEffect } from 'react'
 import { Search } from 'lucide-react'
 import config from '../widget-config.json'
 import { useWidget } from '../../../contexts/WidgetContext'
+import { NavigationParams, Article } from '../../../types/widget'
 
 interface HomeViewProps {
-  onNavigate: (view: string, params?: any) => void
+  onNavigate: (view: string, params?: NavigationParams) => void
 }
 
 export default function HomeView({ onNavigate }: HomeViewProps) {
@@ -26,13 +27,13 @@ export default function HomeView({ onNavigate }: HomeViewProps) {
     }
     
     const query = searchQuery.toLowerCase().trim()
-    return config.mockData.articles.filter((article: any) => 
+    return config.mockData.articles.filter((article: Article) => 
       article.title.toLowerCase().includes(query) ||
       article.snippet.toLowerCase().includes(query)
     )
   }, [searchQuery])
 
-  const handleArticleClick = (article: any) => {
+  const handleArticleClick = (article: Article) => {
     onNavigate('ARTICLE_VIEW', { article, searchQuery, filteredArticles })
   }
 
@@ -60,7 +61,7 @@ export default function HomeView({ onNavigate }: HomeViewProps) {
         <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
           {filteredArticles.length > 0 ? (
             <>
-              {filteredArticles.map((article: any) => (
+              {filteredArticles.map((article: Article) => (
                 <div
                   key={article.id}
                   onClick={() => handleArticleClick(article)}

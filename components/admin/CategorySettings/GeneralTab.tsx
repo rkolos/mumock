@@ -8,7 +8,7 @@ interface GeneralTabProps {
 }
 
 export default function GeneralTab({ category, onCategoryChange }: GeneralTabProps) {
-  const handleChange = (field: keyof Category, value: any) => {
+  const handleChange = (field: keyof Category, value: string | number | undefined) => {
     onCategoryChange({ [field]: value })
   }
 

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 import { Ticket } from '../data/tickets'
+import { WidgetTicketData } from '../types/widget'
 
 interface Toast {
   id: string
@@ -14,7 +15,7 @@ interface WidgetContextType {
   openWidget: () => void
   closeWidget: () => void
   toggleWidget: () => void
-  createTicket: (ticketData: any) => Ticket
+  createTicket: (ticketData: WidgetTicketData) => Ticket
   tickets: Ticket[]
   toasts: Toast[]
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void
@@ -58,7 +59,7 @@ export function WidgetProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // Преобразует данные из виджета в формат Ticket админки
-  const createTicket = useCallback((ticketData: any): Ticket => {
+  const createTicket = useCallback((ticketData: WidgetTicketData): Ticket => {
     const categoryMap: Record<string, string> = {
       'general': 'General',
       'technical_support': 'Technical',

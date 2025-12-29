@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import config from '../widget-config.json'
+import { NavigationParams } from '../../../types/widget'
 
 interface AIChatProps {
-  onNavigate: (view: string, params?: any) => void
-  params?: any
+  onNavigate: (view: string, params?: NavigationParams) => void
+  params?: NavigationParams
 }
 
 export default function AIChat({ onNavigate, params = {} }: AIChatProps) {
@@ -30,9 +31,9 @@ export default function AIChat({ onNavigate, params = {} }: AIChatProps) {
     return config.ai_response_mock.default
   }
 
-  const generateInitialData = (userQuery: string) => {
+  const generateInitialData = (userQuery: string): Record<string, string> => {
     const lowerQuery = userQuery.toLowerCase()
-    const initialData: any = {}
+    const initialData: Record<string, string> = {}
 
     if (lowerQuery.includes('оплат') || lowerQuery.includes('платеж') || lowerQuery.includes('деньг') || lowerQuery.includes('транзакц')) {
       initialData.category = 'billing_finance'
@@ -116,7 +117,7 @@ export default function AIChat({ onNavigate, params = {} }: AIChatProps) {
       onNavigate('TICKET_FORM', { 
         fromAI: true, 
         query, 
-        aiResponse,
+        aiResponse: aiResponse || undefined,
         initialData 
       })
     }
