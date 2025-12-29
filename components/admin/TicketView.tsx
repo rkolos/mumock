@@ -359,15 +359,6 @@ export default function TicketView({ ticketId }: TicketViewProps) {
     }
   }
 
-  // Показать оригинал сообщения
-  const handleShowOriginalMessage = (messageId: string) => {
-    setTranslatedMessages(prev => {
-      const newState = { ...prev }
-      delete newState[messageId]
-      return newState
-    })
-  }
-
   // Перевод исходящего сообщения (от админа к пользователю)
   const handleTranslateOutgoingMessage = async (targetLang: string) => {
     if (!messageText.trim()) return
@@ -1472,27 +1463,46 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                       >
                         {/* Текст сообщения */}
                         {message.content && (
-                          <div 
-                            className="text-[14px] mb-2 whitespace-pre-wrap"
-                            style={{ lineHeight: '1.45' }}
-                          >
-                            {translatedMessages[message.id] ? translatedMessages[message.id].content : message.content}
-                          </div>
-                        )}
-                        
-                        {/* Индикатор перевода */}
-                        {translatedMessages[message.id] && (
-                          <div className="mb-2">
-                            <span className="text-[11px] text-gray-500 italic">
-                              Translated to {getLanguageName(translatedMessages[message.id].targetLang)}
-                            </span>
-                            <button
-                              onClick={() => handleShowOriginalMessage(message.id)}
-                              className="ml-2 text-[11px] text-blue-600 hover:text-blue-700 underline"
+                          translatedMessages[message.id] ? (
+                            // Split View режим
+                            <>
+                              {/* Переведенный текст (основной) */}
+                              <div 
+                                className="text-[14px] mb-3 whitespace-pre-wrap"
+                                style={{ lineHeight: '1.45' }}
+                              >
+                                {translatedMessages[message.id].content}
+                              </div>
+                              
+                              {/* Разделитель */}
+                              <div className="border-t border-gray-300 my-3"></div>
+                              
+                              {/* Оригинальный текст (второстепенный) */}
+                              <div 
+                                className="text-[13px] text-gray-600 italic whitespace-pre-wrap"
+                                style={{ lineHeight: '1.45' }}
+                              >
+                                <span className="text-[11px] font-semibold not-italic">Original:</span>
+                                <br />
+                                {message.content}
+                              </div>
+                              
+                              {/* Футер с информацией о переводе */}
+                              <div className="mt-3 pt-2 border-t border-gray-200">
+                                <span className="text-[11px] text-gray-500 italic">
+                                  Translated to {getLanguageName(translatedMessages[message.id].targetLang)}
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            // Обычный режим (оригинал)
+                            <div 
+                              className="text-[14px] mb-2 whitespace-pre-wrap"
+                              style={{ lineHeight: '1.45' }}
                             >
-                              Show Original
-                            </button>
-                          </div>
+                              {message.content}
+                            </div>
+                          )
                         )}
 
                         {/* Изображения / Галерея */}
