@@ -20,6 +20,7 @@ import {
   FileQuestion,
   ChevronLeft,
   ChevronRight,
+  Download,
 } from 'lucide-react'
 import Link from 'next/link'
 import {
@@ -35,9 +36,17 @@ import {
 
 type TabType = 'files' | 'tickets' | 'simulator'
 
+interface Snippet {
+  source_type: 'file' | 'ticket'
+  source_name: string
+  source_id: string
+  content: string
+  score: number
+}
+
 interface QueryResult {
   answer: string
-  sources: Array<{ name: string; type: 'file' | 'ticket' }>
+  snippets: Snippet[]
 }
 
 export default function KnowledgeBase() {
@@ -45,7 +54,7 @@ export default function KnowledgeBase() {
   const [files, setFiles] = useState<KnowledgeFile[]>(mockKnowledgeFiles)
   
   // Преобразуем тикеты в единый формат статей
-  const initialArticles: KnowledgeArticle[] = mockKnowledgeTickets.map((ticket) => ({
+  const ticketArticles: KnowledgeArticle[] = mockKnowledgeTickets.map((ticket) => ({
     id: ticket.id,
     title: ticket.source_ticket_display,
     content: ticket.content,
@@ -55,6 +64,60 @@ export default function KnowledgeBase() {
     source_ticket_id: ticket.source_ticket_id,
     source_ticket_display: ticket.source_ticket_display,
   }))
+  
+  // Примеры статей, созданных вручную через интерфейс
+  const manualArticles: KnowledgeArticle[] = [
+    {
+      id: 'manual_001',
+      title: 'How to configure SMTP settings',
+      content: 'Для настройки SMTP необходимо выполнить следующие шаги:\n\n1. Перейдите в настройки системы\n2. Найдите раздел "Email Configuration"\n3. Введите данные SMTP сервера:\n   - Host: smtp.example.com\n   - Port: 587\n   - Username: your-email@example.com\n   - Password: your-password\n   - Enable TLS: Yes\n\n4. Сохраните настройки и протестируйте отправку тестового письма.\n\nВажно: Убедитесь, что порт 587 не заблокирован файрволом.',
+      created_at: '2025-11-10T09:15:00Z',
+      created_by: 'Admin',
+      type: 'manual',
+    },
+    {
+      id: 'manual_002',
+      title: 'API Rate Limits and Best Practices',
+      content: 'Наша система API имеет следующие лимиты:\n\n- Free tier: 100 запросов в час\n- Pro tier: 1000 запросов в час\n- Enterprise: безлимит\n\nРекомендации по работе с API:\n1. Используйте экспоненциальную задержку при получении ошибки 429\n2. Кэшируйте результаты запросов, когда это возможно\n3. Используйте webhooks вместо polling для получения обновлений\n4. Реализуйте retry логику с максимальным количеством попыток\n\nПример кода для обработки rate limit:\n```\nif (response.status === 429) {\n  const retryAfter = response.headers["Retry-After"] || 60;\n  await sleep(retryAfter * 1000);\n  return retryRequest();\n}\n```',
+      created_at: '2025-11-11T14:30:00Z',
+      created_by: 'Support Team',
+      type: 'manual',
+    },
+    {
+      id: 'manual_003',
+      title: 'Two-Factor Authentication Setup Guide',
+      content: 'Настройка двухфакторной аутентификации (2FA):\n\n1. Войдите в свой аккаунт\n2. Перейдите в "Security Settings"\n3. Нажмите "Enable 2FA"\n4. Отсканируйте QR-код приложением-аутентификатором (Google Authenticator, Authy)\n5. Введите код подтверждения из приложения\n6. Сохраните резервные коды в безопасном месте\n\nРекомендуемые приложения:\n- Google Authenticator\n- Microsoft Authenticator\n- Authy\n\nЕсли вы потеряли доступ к устройству с 2FA, используйте резервные коды или обратитесь в поддержку.',
+      created_at: '2025-11-12T10:45:00Z',
+      created_by: 'Admin',
+      type: 'manual',
+    },
+    {
+      id: 'manual_004',
+      title: 'Database Backup and Recovery Procedures',
+      content: 'Процедуры резервного копирования и восстановления базы данных:\n\nАвтоматические бэкапы:\n- Полные бэкапы: ежедневно в 02:00 UTC\n- Инкрементальные бэкапы: каждые 6 часов\n- Хранение: 30 дней для полных, 7 дней для инкрементальных\n\nРучное восстановление:\n1. Определите нужную точку восстановления\n2. Остановите приложение\n3. Восстановите базу данных из бэкапа\n4. Проверьте целостность данных\n5. Запустите приложение\n\nКоманда для восстановления:\n```\npg_restore -d database_name backup_file.dump\n```\n\nВажно: Всегда тестируйте восстановление на тестовой среде перед применением в продакшене.',
+      created_at: '2025-11-13T16:20:00Z',
+      created_by: 'DevOps Team',
+      type: 'manual',
+    },
+    {
+      id: 'manual_005',
+      title: 'Webhook Configuration and Testing',
+      content: 'Настройка webhook для получения уведомлений:\n\n1. Создайте endpoint на вашем сервере для приема webhook\n2. В настройках API создайте новый webhook:\n   - URL: https://your-domain.com/webhook\n   - Events: выберите события для подписки\n   - Secret: сгенерируйте секретный ключ\n\n3. Проверьте подпись запроса:\n```\nconst signature = crypto\n  .createHmac("sha256", secret)\n  .update(JSON.stringify(payload))\n  .digest("hex");\n```\n\n4. Всегда возвращайте 200 OK в течение 5 секунд\n5. Реализуйте идемпотентность для обработки дубликатов\n\nТестирование:\n- Используйте ngrok для локальной разработки\n- Проверяйте логи на наличие ошибок\n- Мониторьте время ответа',
+      created_at: '2025-11-14T11:10:00Z',
+      created_by: 'Developer',
+      type: 'manual',
+    },
+  ]
+  
+  // Перемешиваем статьи так, чтобы несколько manual статей были на первой странице
+  // Берем первые 3 manual статьи, затем все тикеты, затем остальные manual статьи
+  const firstManualArticles = manualArticles.slice(0, 3)
+  const remainingManualArticles = manualArticles.slice(3)
+  const initialArticles: KnowledgeArticle[] = [
+    ...firstManualArticles,
+    ...ticketArticles,
+    ...remainingManualArticles,
+  ]
   
   const [articles, setArticles] = useState<KnowledgeArticle[]>(initialArticles)
   const [expandedArticles, setExpandedArticles] = useState<Set<string>>(new Set())
@@ -68,6 +131,7 @@ export default function KnowledgeBase() {
   const [query, setQuery] = useState('')
   const [queryResult, setQueryResult] = useState<QueryResult | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [expandedSnippets, setExpandedSnippets] = useState<Set<number>>(new Set([0])) // Первый элемент развернут по умолчанию
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [dragActive, setDragActive] = useState(false)
 
@@ -355,19 +419,52 @@ export default function KnowledgeBase() {
     // Скрываем предыдущий результат
     setQueryResult(null)
     setIsGenerating(true)
+    setExpandedSnippets(new Set([0])) // Сбрасываем состояние аккордеона, первый элемент развернут
 
     // Симуляция запроса к RAG-системе
     setTimeout(() => {
       const result: QueryResult = {
         answer: `Это пример ответа RAG-системы на вопрос: "${query}". В реальной системе здесь будет ответ, сгенерированный на основе загруженных данных и знаний из тикетов. Ответ может содержать несколько абзацев и подробную информацию из базы знаний.\n\nВ данном случае система использует информацию из загруженных документов и ранее решенных тикетов для формирования наиболее точного ответа.`,
-        sources: [
-          { name: 'Refund_Policy.pdf', type: 'file' },
-          { name: 'Ticket #8841', type: 'ticket' },
+        snippets: [
+          {
+            source_type: 'file',
+            source_name: 'Refund_Policy.pdf',
+            source_id: 'file_refund_policy_001',
+            content: 'Согласно политике возврата средств, клиенты могут запросить возврат в течение 30 дней с момента покупки. Для оформления возврата необходимо заполнить форму на сайте или связаться с поддержкой. Обработка возврата занимает от 5 до 10 рабочих дней.',
+            score: 0.87123456,
+          },
+          {
+            source_type: 'ticket',
+            source_name: 'Ticket #8841: Вопрос о возврате средств',
+            source_id: '8841',
+            content: 'Клиент обратился с вопросом о возврате средств за подписку. Было выяснено, что возврат возможен в течение 30 дней. Клиент получил инструкции по заполнению формы возврата.',
+            score: 0.57176661,
+          },
+          {
+            source_type: 'file',
+            source_name: 'Terms_of_Service.pdf',
+            source_id: 'file_terms_002',
+            content: 'Условия возврата средств описаны в разделе 4.2 настоящего соглашения. Возврат производится на тот же способ оплаты, который использовался при покупке.',
+            score: 0.42345678,
+          },
         ],
       }
       setQueryResult(result)
       setIsGenerating(false)
     }, 1500)
+  }
+
+  // Переключение раскрытия сниппета
+  const toggleSnippetExpanded = (index: number) => {
+    setExpandedSnippets((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(index)) {
+        newSet.delete(index)
+      } else {
+        newSet.add(index)
+      }
+      return newSet
+    })
   }
 
   const tabs: { id: TabType; label: string; icon: JSX.Element }[] = [
@@ -526,13 +623,29 @@ export default function KnowledgeBase() {
                             </td>
                             <td className="px-4 py-3 text-sm">{getFileStatusBadge(file.status)}</td>
                             <td className="px-4 py-3 text-sm">
-                              <button
-                                onClick={() => handleDeleteFile(file.id)}
-                                className="text-red-600 hover:text-red-700 transition-colors"
-                                title="Delete"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleDeleteFile(file.id)}
+                                  className="text-red-600 hover:text-red-700 transition-colors"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    // Здесь можно добавить логику скачивания файла
+                                    const link = document.createElement('a')
+                                    link.href = `#` // В реальном приложении здесь будет URL файла
+                                    link.download = file.name
+                                    link.click()
+                                  }}
+                                  className="text-gray-600 hover:text-gray-900 transition-colors"
+                                  title="Download"
+                                >
+                                  <Download className="h-4 w-4" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -847,40 +960,97 @@ export default function KnowledgeBase() {
                 {queryResult && !isGenerating && (
                   <div className="w-full max-w-[800px] mt-12">
                     <div className="bg-white border border-[#e2e8f0] rounded-lg overflow-hidden">
-                      {/* Header */}
-                      <div className="px-6 py-4 border-b border-[#e2e8f0]">
-                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      {/* Блок А: Ответ ИИ */}
+                      <div className="bg-white px-6 py-4">
+                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                           AI Generated Response
                         </div>
-                      </div>
-
-                      {/* Body */}
-                      <div className="px-6 py-4">
                         <div className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">
                           {queryResult.answer}
                         </div>
                       </div>
 
-                      {/* Footer - Citations */}
-                      <div className="px-6 py-4 bg-gray-50 border-t border-[#e2e8f0]">
-                        <div className="flex items-center gap-2 mb-3">
-                          <FileQuestion className="h-4 w-4 text-gray-600" />
-                          <span className="text-xs font-semibold text-gray-700">Sources Used:</span>
+                      {/* Разделитель */}
+                      <div className="border-t border-[#e2e8f0]"></div>
+
+                      {/* Блок Б: Использованный контекст */}
+                      <div className="bg-gray-50 px-6 py-4">
+                        <div className="text-xs font-semibold text-gray-700 mb-4">
+                          Retrieved Context ({queryResult.snippets.length})
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {queryResult.sources.map((source, index) => (
-                            <div
-                              key={index}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-md text-xs text-gray-700"
-                            >
-                              {source.type === 'file' ? (
-                                <FileText className="h-3.5 w-3.5 text-gray-500" />
-                              ) : (
-                                <Ticket className="h-3.5 w-3.5 text-blue-600" />
-                              )}
-                              <span>{source.name}</span>
-                            </div>
-                          ))}
+                        
+                        {/* Список сниппетов (Accordion) */}
+                        <div className="space-y-2">
+                          {queryResult.snippets.map((snippet, index) => {
+                            const isExpanded = expandedSnippets.has(index)
+                            
+                            return (
+                              <div
+                                key={index}
+                                className="bg-white border border-[#e2e8f0] rounded-lg overflow-hidden"
+                              >
+                                {/* Заголовок элемента списка */}
+                                <button
+                                  onClick={() => toggleSnippetExpanded(index)}
+                                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
+                                >
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    {/* Иконка типа источника */}
+                                    <div className="flex-shrink-0">
+                                      {snippet.source_type === 'file' ? (
+                                        <FileText className="h-4 w-4 text-gray-600" />
+                                      ) : (
+                                        <Ticket className="h-4 w-4 text-blue-600" />
+                                      )}
+                                    </div>
+                                    
+                                    {/* Название источника */}
+                                    <span className="font-medium text-sm text-gray-900 truncate">
+                                      {snippet.source_name}
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Показатель релевантности */}
+                                  <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+                                    <span className="text-xs text-gray-500">Score:</span>
+                                    <span className="text-xs text-gray-700 font-mono">
+                                      {snippet.score}
+                                    </span>
+                                    <ChevronDown
+                                      className={`h-4 w-4 text-gray-400 transition-transform flex-shrink-0 ${
+                                        isExpanded ? 'transform rotate-180' : ''
+                                      }`}
+                                    />
+                                  </div>
+                                </button>
+
+                                {/* Тело элемента списка (Expanded) */}
+                                {isExpanded && (
+                                  <div className="px-4 py-3 border-t border-[#e2e8f0] bg-gray-50">
+                                    {/* Текст сниппета (стилизован как цитата) */}
+                                    <div className="border-l-4 border-blue-500 pl-4 py-2 mb-3">
+                                      <div className="text-sm text-gray-700 font-mono whitespace-pre-wrap leading-relaxed">
+                                        {snippet.content}
+                                      </div>
+                                    </div>
+                                    
+                                    {/* Кнопка перехода */}
+                                    <Link
+                                      href={
+                                        snippet.source_type === 'file'
+                                          ? `#file-${snippet.source_id}`
+                                          : `/tickets/${snippet.source_id}`
+                                      }
+                                      target="_blank"
+                                      className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 hover:underline"
+                                    >
+                                      Open Source
+                                    </Link>
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
                         </div>
                       </div>
                     </div>

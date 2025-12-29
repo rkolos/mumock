@@ -55,6 +55,7 @@ import { mockTags } from '../../data/tags'
 import AiContextBar from './AiContextBar'
 import SourcePreviewModal from './SourcePreviewModal'
 import Tooltip from './Tooltip'
+import CloseTicketDialog from './CloseTicketDialog'
 
 interface Message {
   id: string
@@ -140,6 +141,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
     ticketId?: string
   } | null>(null)
   const [isSourceModalOpen, setIsSourceModalOpen] = useState(false)
+  const [isCloseTicketDialogOpen, setIsCloseTicketDialogOpen] = useState(false)
 
   // Состояния для вкладок
   type TabType = 'public' | 'team' | 'dossier'
@@ -723,9 +725,45 @@ export default function TicketView({ ticketId }: TicketViewProps) {
   }
 
   const handleStatusChange = (newStatus: Ticket['status']) => {
-    setCurrentStatus(newStatus)
-    setStatusDropdownOpen(false)
-    // Здесь можно добавить автосохранение
+    if (newStatus === 'closed') {
+      // Открываем модальное окно для закрытия тикета
+      setIsCloseTicketDialogOpen(true)
+      setStatusDropdownOpen(false)
+    } else {
+      setCurrentStatus(newStatus)
+      setStatusDropdownOpen(false)
+      // Здесь можно добавить автосохранение
+    }
+  }
+
+  const handleCloseTicket = async (addToKnowledgeBase: boolean) => {
+    try {
+      // Отправляем запрос на закрытие тикета
+      // В реальном приложении здесь будет API запрос
+      // await fetch(`/api/tickets/${ticketId}/close`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ add_to_knowledge_base: addToKnowledgeBase })
+      // })
+
+      // Моковая реализация
+      console.log(`Closing ticket ${ticketId} with addToKnowledgeBase: ${addToKnowledgeBase}`)
+      
+      setCurrentStatus('closed')
+      setIsCloseTicketDialogOpen(false)
+      
+      // Опционально: показать тост при добавлении в базу знаний
+      if (addToKnowledgeBase) {
+        // Здесь можно добавить показ тоста
+        // showToast('Ticket closed & submitted to Knowledge Base', 'success')
+      }
+      
+      // Перенаправление на список тикетов (опционально)
+      // router.push('/tickets')
+    } catch (error) {
+      console.error('Error closing ticket:', error)
+      // Здесь можно добавить обработку ошибок
+    }
   }
 
   const handlePriorityChange = (newPriority: Ticket['priority']) => {
@@ -2791,6 +2829,14 @@ export default function TicketView({ ticketId }: TicketViewProps) {
           setSelectedSource(null)
         }}
         source={selectedSource}
+      />
+
+      {/* Close Ticket Dialog */}
+      <CloseTicketDialog
+        isOpen={isCloseTicketDialogOpen}
+        onClose={() => setIsCloseTicketDialogOpen(false)}
+        onConfirm={handleCloseTicket}
+        ticketId={ticketId}
       />
     </div>
   )
