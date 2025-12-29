@@ -17,6 +17,7 @@ import {
   User,
   ChevronDown,
   Brain,
+  Zap,
 } from 'lucide-react'
 import { useWidget } from '../../contexts/WidgetContext'
 import { useEffect, useState, useRef } from 'react'
@@ -43,7 +44,8 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       '/panels': 'panels',
       '/members': 'members',
       '/roles': 'roles',
-      '/migration': 'migration'
+      '/migration': 'migration',
+      '/macros': 'macros'
     }
     const section = sectionMap[pathname] || null
     setCurrentSection(section)
@@ -89,6 +91,7 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       { name: 'Roles', href: '/roles', icon: UserCheck },
       { name: 'Categories', href: '/categories', icon: LayoutGrid },
       { name: 'Knowledge Base', href: '/knowledge-base', icon: Brain },
+      { name: 'Macros', href: '/macros', icon: Zap },
       { name: 'Migration', href: '/migration', icon: ArrowLeftRight },
     ],
   }
