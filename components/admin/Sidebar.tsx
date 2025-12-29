@@ -16,6 +16,7 @@ import {
   X,
   User,
   ChevronDown,
+  Brain,
 } from 'lucide-react'
 import { useWidget } from '../../contexts/WidgetContext'
 import { useEffect, useState, useRef } from 'react'
@@ -38,6 +39,7 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       '/statuses': 'statuses',
       '/tags': 'tags',
       '/categories': 'categories',
+      '/knowledge-base': 'knowledge-base',
       '/panels': 'panels',
       '/members': 'members',
       '/roles': 'roles',
@@ -86,6 +88,7 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       { name: 'Members', href: '/members', icon: Users },
       { name: 'Roles', href: '/roles', icon: UserCheck },
       { name: 'Categories', href: '/categories', icon: LayoutGrid },
+      { name: 'Knowledge Base', href: '/knowledge-base', icon: Brain },
       { name: 'Migration', href: '/migration', icon: ArrowLeftRight },
     ],
   }
@@ -231,7 +234,11 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
 
         {/* Profile */}
         <div className="p-4 border-t border-slate-700">
-          <div className="flex items-center gap-3 hover:bg-slate-700/50 rounded-md p-2 transition-colors cursor-pointer">
+          <Link
+            href="/profile"
+            onClick={handleLinkClick}
+            className="flex items-center gap-3 hover:bg-slate-700/50 rounded-md p-2 transition-colors cursor-pointer"
+          >
             <div className="relative">
               <div className="h-10 w-10 rounded-full bg-slate-600 flex items-center justify-center">
                 <User className="h-5 w-5 text-white" />
@@ -243,10 +250,10 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
                 v.panov@dt.team
               </p>
             </div>
-            <button className="p-1 hover:bg-slate-600 rounded">
+            <div className="p-1">
               <Settings className="h-5 w-5 text-slate-300" />
-            </button>
-          </div>
+            </div>
+          </Link>
         </div>
       </aside>
     </>
