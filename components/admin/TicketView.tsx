@@ -49,6 +49,7 @@ import {
   Save,
   Languages,
   RotateCcw,
+  Zap,
 } from 'lucide-react'
 import { mockTickets, Ticket } from '../../data/tickets'
 import { mockTags } from '../../data/tags'
@@ -56,6 +57,7 @@ import AiContextBar from './AiContextBar'
 import SourcePreviewModal from './SourcePreviewModal'
 import Tooltip from './Tooltip'
 import CloseTicketDialog from './CloseTicketDialog'
+import MacrosMenu from './MacrosMenu'
 
 interface Message {
   id: string
@@ -179,6 +181,8 @@ export default function TicketView({ ticketId }: TicketViewProps) {
   const [isTranslatingInput, setIsTranslatingInput] = useState(false)
   const [translatedInputText, setTranslatedInputText] = useState<string | null>(null)
   const messageTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const [macrosMenuOpen, setMacrosMenuOpen] = useState(false)
+  const macrosMenuRef = useRef<HTMLDivElement>(null)
 
   // Язык интерфейса админа (по умолчанию русский)
   const adminInterfaceLang = 'ru'
@@ -279,13 +283,20 @@ export default function TicketView({ ticketId }: TicketViewProps) {
       ) {
         setTranslationLangMenuOpen(false)
       }
+      // Закрытие меню макросов
+      if (
+        macrosMenuRef.current &&
+        !macrosMenuRef.current.contains(event.target as Node)
+      ) {
+        setMacrosMenuOpen(false)
+      }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [messageContextMenuOpen, emojiPickerOpen, translationLangMenuOpen])
+  }, [messageContextMenuOpen, emojiPickerOpen, translationLangMenuOpen, macrosMenuOpen])
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value
@@ -299,6 +310,28 @@ export default function TicketView({ ticketId }: TicketViewProps) {
       setOriginalInputText(null)
       setTranslatedInputText(null)
     }
+  }
+
+  const handleInsertMacro = (macroText: string) => {
+    const textarea = messageTextareaRef.current
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const currentText = messageText
+
+    // Вставляем текст макроса в позицию курсора или заменяем выделенный текст
+    const newText =
+      currentText.substring(0, start) + macroText + currentText.substring(end)
+
+    setMessageText(newText)
+
+    // Устанавливаем курсор после вставленного текста
+    setTimeout(() => {
+      const newCursorPosition = start + macroText.length
+      textarea.focus()
+      textarea.setSelectionRange(newCursorPosition, newCursorPosition)
+    }, 0)
   }
 
   // API функция для перевода текста
@@ -1785,6 +1818,28 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                         />
                         {/* Кнопки управления справа внутри textarea */}
                         <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                          {/* Кнопка макросов */}
+                          <div className="relative" ref={macrosMenuRef}>
+                            <Tooltip text="Вставить шаблон">
+                              <button
+                                onClick={() => setMacrosMenuOpen(!macrosMenuOpen)}
+                                disabled={isAiLoading || isTranslatingInput}
+                                className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Insert Macro"
+                              >
+                                <Zap className="h-4 w-4 text-gray-500" />
+                              </button>
+                            </Tooltip>
+                            {/* Меню макросов */}
+                            {macrosMenuOpen && (
+                              <MacrosMenu
+                                isOpen={macrosMenuOpen}
+                                onClose={() => setMacrosMenuOpen(false)}
+                                onSelectMacro={handleInsertMacro}
+                                position={{ bottom: 'calc(100% + 8px)', right: 0 }}
+                              />
+                            )}
+                          </div>
                           {/* Кнопка перевода */}
                           <div className="relative" ref={translationLangMenuRef}>
                             {ticketTargetLanguage ? (

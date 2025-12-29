@@ -584,79 +584,81 @@ export default function KnowledgeBase() {
                 </div>
 
                 {/* Files Table */}
-                <div className="bg-white rounded-lg border border-[#e2e8f0] overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50 border-b border-[#e2e8f0]">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            File Name
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            Date
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            Size
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-[#e2e8f0]">
-                        {paginatedFiles.map((file) => (
-                          <tr key={file.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-4 py-3 text-sm">
-                              <div className="flex items-center gap-2">
-                                {getFileIcon(file.type)}
-                                <span className="font-medium text-gray-900">{file.name}</span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">
-                              {formatDate(file.uploadDate)}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">
-                              {formatFileSize(file.size)}
-                            </td>
-                            <td className="px-4 py-3 text-sm">{getFileStatusBadge(file.status)}</td>
-                            <td className="px-4 py-3 text-sm">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => handleDeleteFile(file.id)}
-                                  className="text-red-600 hover:text-red-700 transition-colors"
-                                  title="Delete"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    // Здесь можно добавить логику скачивания файла
-                                    const link = document.createElement('a')
-                                    link.href = `#` // В реальном приложении здесь будет URL файла
-                                    link.download = file.name
-                                    link.click()
-                                  }}
-                                  className="text-gray-600 hover:text-gray-900 transition-colors"
-                                  title="Download"
-                                >
-                                  <Download className="h-4 w-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                {files.length > 0 ? (
+                  <>
+                    <div className="bg-white rounded-lg border border-[#e2e8f0] overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50 border-b border-[#e2e8f0]">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                File Name
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Date
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Size
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Status
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-[#e2e8f0]">
+                            {paginatedFiles.map((file) => (
+                              <tr key={file.id} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-4 py-3 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    {getFileIcon(file.type)}
+                                    <span className="font-medium text-gray-900">{file.name}</span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">
+                                  {formatDate(file.uploadDate)}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">
+                                  {formatFileSize(file.size)}
+                                </td>
+                                <td className="px-4 py-3 text-sm">{getFileStatusBadge(file.status)}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => handleDeleteFile(file.id)}
+                                      className="text-red-600 hover:text-red-700 transition-colors"
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        // Здесь можно добавить логику скачивания файла
+                                        const link = document.createElement('a')
+                                        link.href = `#` // В реальном приложении здесь будет URL файла
+                                        link.download = file.name
+                                        link.click()
+                                      }}
+                                      className="text-gray-600 hover:text-gray-900 transition-colors"
+                                      title="Download"
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
 
-                {/* Pagination */}
-                {totalFilesPages > 1 && (
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-[#e2e8f0] bg-gray-50 mt-4 rounded-b-lg">
+                    {/* Pagination */}
+                    {totalFilesPages > 1 && (
+                      <div className="flex items-center justify-between px-4 py-3 border-t border-[#e2e8f0] bg-gray-50 mt-4 rounded-b-lg">
                     <div className="text-sm text-gray-600">
                       {filesStartIndex + 1}-{Math.min(filesEndIndex, files.length)} of {files.length}
                     </div>
@@ -709,6 +711,18 @@ export default function KnowledgeBase() {
                       </button>
                     </div>
                   </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="bg-white rounded-lg border border-[#e2e8f0] p-12 text-center">
+                    <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Нет загруженных файлов
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-6">
+                      Добавьте свой первый файл в базу знаний, используя форму загрузки выше
+                    </p>
+                  </div>
                 )}
               </div>
             )}
@@ -759,148 +773,162 @@ export default function KnowledgeBase() {
                 </div>
 
                 {/* Articles List */}
-                <div className="space-y-2">
-                  {paginatedArticles.map((article) => {
-                    const isExpanded = expandedArticles.has(article.id)
+                {articles.length > 0 ? (
+                  <>
+                    <div className="space-y-2">
+                      {paginatedArticles.map((article) => {
+                        const isExpanded = expandedArticles.has(article.id)
 
-                    return (
-                      <div
-                        key={article.id}
-                        className="bg-white border border-[#e2e8f0] rounded-lg overflow-hidden"
-                      >
-                        {/* Header */}
-                        <div className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                          <button
-                            onClick={() => toggleArticleExpanded(article.id)}
-                            className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                        return (
+                          <div
+                            key={article.id}
+                            className="bg-white border border-[#e2e8f0] rounded-lg overflow-hidden"
                           >
-                            {/* Icon */}
-                            <div className="flex-shrink-0">
-                              {article.type === 'manual' ? (
-                                <FileEdit className="h-5 w-5 text-gray-600" />
-                              ) : (
-                                <Ticket className="h-5 w-5 text-blue-600" />
-                              )}
-                            </div>
-                            {/* Title and Metadata */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                {article.type === 'ticket' && article.source_ticket_id ? (
-                                  <Link
-                                    href={`/tickets/${article.source_ticket_id.replace('ticket-', '')}`}
-                                    target="_blank"
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-                                  >
-                                    #{article.source_ticket_id.replace('ticket-', '')}: {article.title.replace(/#\d+/, '').trim()}
-                                  </Link>
-                                ) : (
-                                  <span className="font-medium text-sm text-gray-900">
-                                    {article.title}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-gray-500">
-                                  {article.type === 'manual'
-                                    ? `Manual Entry • Added by ${article.created_by}`
-                                    : `Ticket Source • ${formatRelativeDate(article.created_at)}`}
-                                </span>
-                              </div>
-                            </div>
-                            <ChevronDown
-                              className={`h-4 w-4 text-gray-400 transition-transform flex-shrink-0 ${
-                                isExpanded ? 'transform rotate-180' : ''
-                              }`}
-                            />
-                          </button>
-                          {/* Action Button */}
-                          <div className="flex items-center gap-2 ml-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleDeleteArticle(article.id)
-                              }}
-                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                              title="Delete Article"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Expanded Content */}
-                        {isExpanded && (
-                          <div className="px-4 py-4 border-t border-[#e2e8f0] bg-gray-50">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Knowledge Content
-                              </label>
-                              <div className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg bg-white font-mono text-sm whitespace-pre-wrap">
-                                {article.content}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-[#e2e8f0] bg-gray-50 rounded-b-lg">
-                    <div className="text-sm text-gray-600">
-                      {startIndex + 1}-{Math.min(endIndex, articles.length)} of {articles.length}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                        disabled={currentPage === 1}
-                        className="p-2 border border-[#e2e8f0] rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        title="Previous page"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                          if (
-                            page === 1 ||
-                            page === totalPages ||
-                            (page >= currentPage - 1 && page <= currentPage + 1)
-                          ) {
-                            return (
+                            {/* Header */}
+                            <div className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
                               <button
-                                key={page}
-                                onClick={() => setCurrentPage(page)}
-                                className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                                  currentPage === page
-                                    ? 'bg-black text-white'
-                                    : 'text-gray-700 hover:bg-gray-100 border border-[#e2e8f0]'
-                                }`}
+                                onClick={() => toggleArticleExpanded(article.id)}
+                                className="flex items-center gap-3 flex-1 min-w-0 text-left"
                               >
-                                {page}
+                                {/* Icon */}
+                                <div className="flex-shrink-0">
+                                  {article.type === 'manual' ? (
+                                    <FileEdit className="h-5 w-5 text-gray-600" />
+                                  ) : (
+                                    <Ticket className="h-5 w-5 text-blue-600" />
+                                  )}
+                                </div>
+                                {/* Title and Metadata */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    {article.type === 'ticket' && article.source_ticket_id ? (
+                                      <Link
+                                        href={`/tickets/${article.source_ticket_id.replace('ticket-', '')}`}
+                                        target="_blank"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                                      >
+                                        #{article.source_ticket_id.replace('ticket-', '')}: {article.title.replace(/#\d+/, '').trim()}
+                                      </Link>
+                                    ) : (
+                                      <span className="font-medium text-sm text-gray-900">
+                                        {article.title}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-xs text-gray-500">
+                                      {article.type === 'manual'
+                                        ? `Manual Entry • Added by ${article.created_by}`
+                                        : `Ticket Source • ${formatRelativeDate(article.created_at)}`}
+                                    </span>
+                                  </div>
+                                </div>
+                                <ChevronDown
+                                  className={`h-4 w-4 text-gray-400 transition-transform flex-shrink-0 ${
+                                    isExpanded ? 'transform rotate-180' : ''
+                                  }`}
+                                />
                               </button>
-                            )
-                          } else if (page === currentPage - 2 || page === currentPage + 2) {
-                            return (
-                              <span key={page} className="px-2 text-gray-500">
-                                ...
-                              </span>
-                            )
-                          }
-                          return null
-                        })}
-                      </div>
-                      <button
-                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                        disabled={currentPage === totalPages}
-                        className="p-2 border border-[#e2e8f0] rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        title="Next page"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
+                              {/* Action Button */}
+                              <div className="flex items-center gap-2 ml-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleDeleteArticle(article.id)
+                                  }}
+                                  className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                  title="Delete Article"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Expanded Content */}
+                            {isExpanded && (
+                              <div className="px-4 py-4 border-t border-[#e2e8f0] bg-gray-50">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Knowledge Content
+                                  </label>
+                                  <div className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg bg-white font-mono text-sm whitespace-pre-wrap">
+                                    {article.content}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between px-4 py-3 border-t border-[#e2e8f0] bg-gray-50 rounded-b-lg">
+                        <div className="text-sm text-gray-600">
+                          {startIndex + 1}-{Math.min(endIndex, articles.length)} of {articles.length}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
+                            className="p-2 border border-[#e2e8f0] rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            title="Previous page"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </button>
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                              if (
+                                page === 1 ||
+                                page === totalPages ||
+                                (page >= currentPage - 1 && page <= currentPage + 1)
+                              ) {
+                                return (
+                                  <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                                      currentPage === page
+                                        ? 'bg-black text-white'
+                                        : 'text-gray-700 hover:bg-gray-100 border border-[#e2e8f0]'
+                                    }`}
+                                  >
+                                    {page}
+                                  </button>
+                                )
+                              } else if (page === currentPage - 2 || page === currentPage + 2) {
+                                return (
+                                  <span key={page} className="px-2 text-gray-500">
+                                    ...
+                                  </span>
+                                )
+                              }
+                              return null
+                            })}
+                          </div>
+                          <button
+                            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                            disabled={currentPage === totalPages}
+                            className="p-2 border border-[#e2e8f0] rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            title="Next page"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="bg-white rounded-lg border border-[#e2e8f0] p-12 text-center">
+                    <Brain className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Нет статей в базе знаний
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-6">
+                      Добавьте свою первую статью в базу знаний, используя форму выше
+                    </p>
                   </div>
                 )}
               </div>
