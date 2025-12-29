@@ -1490,7 +1490,13 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                               {/* Футер с информацией о переводе */}
                               <div className="mt-3 pt-2 border-t border-gray-200">
                                 <span className="text-[11px] text-gray-500 italic">
-                                  Translated to {getLanguageName(translatedMessages[message.id].targetLang)}
+                                  Translated to{' '}
+                                  <button
+                                    onClick={() => router.push('/profile')}
+                                    className="text-[11px] text-gray-500 italic underline hover:text-gray-700 cursor-pointer"
+                                  >
+                                    {getLanguageName(translatedMessages[message.id].targetLang)}
+                                  </button>
                                 </span>
                               </div>
                             </>
