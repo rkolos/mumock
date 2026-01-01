@@ -116,23 +116,23 @@ export default function FilesLibraryView({
   const paginatedFiles = filteredFiles.slice(startIndex, endIndex)
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Top Bar */}
-      <div className="p-4 border-b border-[#e2e8f0] bg-white">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">Files Library</h2>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-2 bg-black text-white hover:bg-gray-900 rounded-md transition-colors flex items-center gap-2"
-          >
-            <Upload className="h-4 w-4" />
-            <span>Upload Files</span>
-          </button>
-        </div>
+    <div className="flex flex-col h-full w-full p-6">
+      {/* Page Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900">Files Library</h1>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 text-sm font-medium rounded-md transition-colors flex items-center gap-2"
+        >
+          <Upload className="h-4 w-4" />
+          <span>Upload Files</span>
+        </button>
+      </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      {/* Toolbar */}
+      <div className="flex items-center gap-4 mt-6 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
             value={searchQuery}
@@ -140,14 +140,14 @@ export default function FilesLibraryView({
               setSearchQuery(e.target.value)
               setCurrentPage(1)
             }}
-            placeholder="Search files"
-            className="w-full pl-10 pr-4 py-2 border border-[#e2e8f0] rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+            placeholder="Search files..."
+            className="w-full pl-10 pr-4 h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto bg-[#F5F7FB] p-6">
+      <div className="flex-1 overflow-y-auto bg-white">
         {/* Upload Zone */}
         <div
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors mb-6 ${
@@ -184,46 +184,51 @@ export default function FilesLibraryView({
         {/* Files Table */}
         {filteredFiles.length > 0 ? (
           <>
-            <div className="bg-white rounded-lg border border-[#e2e8f0] overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mt-4">
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-[#e2e8f0]">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        File Name
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        NAME
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Date
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        DATE
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Size
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        SIZE
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Status
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        STATUS
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Actions
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ACTIONS
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-[#e2e8f0]">
-                    {paginatedFiles.map((file) => (
-                      <tr key={file.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-sm">
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {paginatedFiles.map((file, index) => (
+                      <tr 
+                        key={file.id} 
+                        className={`bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors h-14 ${
+                          index === paginatedFiles.length - 1 ? 'border-b-0' : ''
+                        }`}
+                      >
+                        <td className="px-6 py-3 text-sm">
                           <div className="flex items-center gap-2">
-                            <File className="h-4 w-4 text-gray-600" />
+                            <File className="h-5 w-5 text-gray-400" />
                             <span className="font-medium text-gray-900">{file.name}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-6 py-3 text-sm text-gray-500">
                           {formatDate(file.uploadDate)}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-6 py-3 text-sm text-gray-500">
                           {formatFileSize(file.size)}
                         </td>
-                        <td className="px-4 py-3 text-sm">{getFileStatusBadge(file.status)}</td>
-                        <td className="px-4 py-3 text-sm">
-                          <div className="flex items-center gap-2">
+                        <td className="px-6 py-3 text-sm">{getFileStatusBadge(file.status)}</td>
+                        <td className="px-6 py-3 text-sm text-right">
+                          <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => {
                                 const link = document.createElement('a')
@@ -231,7 +236,7 @@ export default function FilesLibraryView({
                                 link.download = file.name
                                 link.click()
                               }}
-                              className="text-gray-600 hover:text-gray-900 transition-colors"
+                              className="text-gray-400 hover:text-gray-600 transition-colors"
                               title="Download"
                             >
                               <Download className="h-4 w-4" />
@@ -242,7 +247,7 @@ export default function FilesLibraryView({
                                   onFileDelete(file.id)
                                 }
                               }}
-                              className="text-red-600 hover:text-red-700 transition-colors"
+                              className="text-gray-400 hover:text-red-600 transition-colors"
                               title="Delete"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -258,7 +263,7 @@ export default function FilesLibraryView({
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-[#e2e8f0] bg-white mt-4 rounded-b-lg">
+              <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-white mt-4 rounded-b-lg">
                 <div className="text-sm text-gray-600">
                   {startIndex + 1}-{Math.min(endIndex, filteredFiles.length)} of{' '}
                   {filteredFiles.length}
@@ -267,7 +272,7 @@ export default function FilesLibraryView({
                   <button
                     onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    className="p-2 border border-[#e2e8f0] rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     title="Previous page"
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -285,8 +290,8 @@ export default function FilesLibraryView({
                             onClick={() => setCurrentPage(page)}
                             className={`px-3 py-1 text-sm rounded-md transition-colors ${
                               currentPage === page
-                                ? 'bg-black text-white'
-                                : 'text-gray-700 hover:bg-gray-100 border border-[#e2e8f0]'
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-700 hover:bg-gray-100 border border-gray-300'
                             }`}
                           >
                             {page}
@@ -305,7 +310,7 @@ export default function FilesLibraryView({
                   <button
                     onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
-                    className="p-2 border border-[#e2e8f0] rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     title="Next page"
                   >
                     <ChevronRight className="h-4 w-4" />
@@ -315,7 +320,7 @@ export default function FilesLibraryView({
             )}
           </>
         ) : (
-          <div className="bg-white rounded-lg border border-[#e2e8f0] p-12 text-center">
+          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
             <File className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               {searchQuery ? 'No files found' : 'Нет загруженных файлов'}

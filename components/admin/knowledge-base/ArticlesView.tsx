@@ -389,45 +389,31 @@ export default function ArticlesView({
   const showParentRow = selectedFolderId !== null && parentFolder !== null
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Header */}
-      <div className="h-16 border-b border-gray-100 flex items-center justify-between px-6 flex-shrink-0">
-        {/* Left: Breadcrumbs */}
-        <div className="flex items-center">
-          <ArticlesBreadcrumbs
-            folderId={selectedFolderId}
-            folders={allFolders}
-            onFolderClick={onFolderSelect}
-          />
+    <div className="flex flex-col h-full w-full p-6 bg-white">
+      {/* Page Header */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Internal Articles</h1>
+          {selectedFolderId && (
+            <div className="mt-1">
+              <ArticlesBreadcrumbs
+                folderId={selectedFolderId}
+                folders={allFolders}
+                onFolderClick={onFolderSelect}
+              />
+            </div>
+          )}
         </div>
-
-        {/* Right: Search + New Dropdown */}
-        <div className="flex items-center gap-3">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={handleSearchFocus}
-              placeholder={searchPlaceholder}
-              className="pl-9 pr-4 py-2 w-64 text-sm bg-gray-50 border-none rounded-md focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all"
-            />
-          </div>
-          
-          {/* New Dropdown */}
-          {!isSearchActive && (
-            <div className="relative" ref={newDropdownRef}>
-              <button
-                onClick={() => setNewDropdownOpen(!newDropdownOpen)}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                <span>New</span>
-                <ChevronDown className="h-4 w-4" />
-              </button>
+        {!isSearchActive && (
+          <div className="relative" ref={newDropdownRef}>
+            <button
+              onClick={() => setNewDropdownOpen(!newDropdownOpen)}
+              className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 text-sm font-medium rounded-md transition-colors flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>New</span>
+              <ChevronDown className="h-4 w-4" />
+            </button>
             {newDropdownOpen && (
               <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
                 <button
@@ -452,16 +438,31 @@ export default function ArticlesView({
                 </button>
               </div>
             )}
-            </div>
-          )}
+          </div>
+        )}
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex items-center gap-4 mt-6 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={handleSearchFocus}
+            placeholder={searchPlaceholder}
+            className="w-full pl-10 pr-4 h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6 bg-white relative">
+      <div className="flex-1 overflow-y-auto bg-white relative">
         {isSearchActive ? (
           /* Search Overlay */
-          <div className="space-y-4">
+          <div>
             {/* Search Header */}
             <div className="flex items-center gap-3 mb-4">
               <button
@@ -478,72 +479,97 @@ export default function ArticlesView({
 
             {/* Skeleton Loaders */}
             {isSearchLoading && (
-              <div className="space-y-3">
-                {[...Array(5)].map((_, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3">
-                    <div className="h-10 w-10 bg-gray-200 rounded-md animate-pulse flex-shrink-0"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mt-4">
+                <div className="divide-y divide-gray-200">
+                  {[...Array(5)].map((_, index) => (
+                    <div key={index} className="h-14 bg-white animate-pulse">
+                      <div className="px-6 py-3 flex items-center gap-3">
+                        <div className="h-5 w-5 bg-gray-200 rounded flex-shrink-0"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Search Results */}
+            {/* Search Results Table */}
             {!isSearchLoading && searchResults.length > 0 && (
-              <div>
-                {searchResults.map((result) => {
-                  const pathString = result.path.map(p => p.name).join(' / ')
-                  return (
-                    <div
-                      key={result.id}
-                      className="group flex items-center px-4 py-3 border-b border-gray-100 bg-white hover:bg-gray-50 cursor-pointer transition-colors min-h-[56px]"
-                      onClick={() => handleViewArticle(result.article)}
-                    >
-                      <div className="flex-shrink-0 mr-3">
-                        <FileText className="w-5 h-5 text-gray-400" />
-                      </div>
-                      <div className="flex-1 min-w-0 flex flex-col">
-                        <span className="text-sm font-medium text-gray-700 truncate">
-                          {result.title}
-                        </span>
-                        <span className="text-xs text-gray-400 truncate mt-0.5">
-                          {pathString}
-                        </span>
-                      </div>
-                      <div className="ml-4 flex-shrink-0 flex items-center gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onEditArticle(result.article)
-                          }}
-                          className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-                          title="Edit Article"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleContextMenu(e, result.article, 'article')
-                          }}
-                          className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-                          title="More options"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mt-4">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          TITLE
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          PATH
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          ACTIONS
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {searchResults.map((result, index) => {
+                        const pathString = result.path.map(p => p.name).join(' / ')
+                        return (
+                          <tr
+                            key={result.id}
+                            className={`bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors h-14 cursor-pointer ${
+                              index === searchResults.length - 1 ? 'border-b-0' : ''
+                            }`}
+                            onClick={() => handleViewArticle(result.article)}
+                          >
+                            <td className="px-6 py-3 text-sm">
+                              <div className="flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-gray-400" />
+                                <span className="font-medium text-gray-900">{result.title}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-3 text-sm text-gray-500">
+                              {pathString}
+                            </td>
+                            <td className="px-6 py-3 text-sm text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onEditArticle(result.article)
+                                  }}
+                                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                                  title="Edit Article"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleContextMenu(e, result.article, 'article')
+                                  }}
+                                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                                  title="More options"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
             {/* Empty State */}
             {!isSearchLoading && searchResults.length === 0 && searchQueryDebounced.trim() && (
-              <div className="bg-white rounded-lg border border-[#e2e8f0] p-12 text-center">
+              <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
                 <FileEdit className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   No articles found
@@ -555,147 +581,179 @@ export default function ArticlesView({
             )}
           </div>
         ) : hasItems || showParentRow ? (
-          <div>
-            {/* Parent Row - Go Up */}
-            {selectedFolderId !== null && (
-              <div
-                className="group flex items-center px-4 py-3 border-b border-gray-100 bg-white hover:bg-gray-50 cursor-pointer transition-colors min-h-[56px]"
-                onClick={() => onFolderSelect(parentFolder?.id || null)}
-              >
-                <div className="flex-shrink-0 mr-3">
-                  <CornerUpLeft className="w-5 h-5 text-gray-400" />
-                </div>
-                <div className="flex-1 min-w-0 flex flex-col">
-                  <span className="text-sm font-medium text-gray-900">
-                    {parentFolder 
-                      ? `.. (Go up to "${parentFolder.name}")`
-                      : '.. (Go up)'}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Folders - Pinned Top */}
-            {sortedFolders.map((folder) => {
-              // Подсчет элементов в папке
-              const foldersCount = folder.items_count?.folders ?? getDirectSubfoldersCount(folder.id, allFolders)
-              const articlesCount = folder.items_count?.articles ?? getDirectArticlesCount(folder.id, articles)
-              const totalCount = foldersCount + articlesCount
-              
-              // Форматирование метаданных
-              const metaParts: string[] = []
-              if (foldersCount > 0) {
-                metaParts.push(`${foldersCount} folder${foldersCount !== 1 ? 's' : ''}`)
-              }
-              if (articlesCount > 0) {
-                metaParts.push(`${articlesCount} article${articlesCount !== 1 ? 's' : ''}`)
-              }
-              if (totalCount === 0) {
-                metaParts.push('Empty folder')
-              }
-              
-              const metaText = metaParts.join(', ')
-              const updatedAt = folder.updated_at ? formatRelativeDate(folder.updated_at) : null
-
-              return (
-                <div
-                  key={folder.id}
-                  className="group flex items-center px-4 py-3 border-b border-gray-100 bg-white hover:bg-gray-50 cursor-pointer transition-colors min-h-[56px]"
-                  onClick={() => onFolderSelect(folder.id)}
-                >
-                  <div className="flex-shrink-0 mr-3">
-                    {totalCount === 0 ? (
-                      <FolderOpen className="w-5 h-5 text-blue-600 fill-blue-50" />
-                    ) : (
-                      <Folder className="w-5 h-5 text-blue-600 fill-blue-50" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col">
-                    <span className="text-sm font-medium text-gray-900 truncate">
-                      {folder.name}
-                    </span>
-                    <span className="text-xs text-gray-500 truncate mt-0.5">
-                      {metaText}
-                      {folder.description && (
-                        <>
-                          {metaText && ' • '}
-                          {folder.description}
-                        </>
-                      )}
-                    </span>
-                  </div>
-                  <div className="ml-4 flex-shrink-0 flex items-center gap-3">
-                    {updatedAt && (
-                      <span className="text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {updatedAt}
-                      </span>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleContextMenu(e, folder, 'folder')
-                      }}
-                      className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors opacity-0 group-hover:opacity-100"
-                      title="More options"
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mt-4">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      TITLE
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      UPDATED
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      ACTIONS
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {/* Parent Row - Go Up */}
+                  {selectedFolderId !== null && (
+                    <tr
+                      className="bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors h-14 cursor-pointer"
+                      onClick={() => onFolderSelect(parentFolder?.id || null)}
                     >
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
+                      <td className="px-6 py-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <CornerUpLeft className="w-5 h-5 text-gray-400" />
+                          <span className="font-medium text-gray-900">
+                            {parentFolder 
+                              ? `.. (Go up to "${parentFolder.name}")`
+                              : '.. (Go up)'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-sm text-gray-500"></td>
+                      <td className="px-6 py-3 text-sm text-right"></td>
+                    </tr>
+                  )}
 
-            {/* Articles - Bottom */}
-            {sortedArticles.map((article) => {
-              const title = getFirstLine(article.body)
+                  {/* Folders */}
+                  {sortedFolders.map((folder, folderIndex) => {
+                    // Подсчет элементов в папке
+                    const foldersCount = folder.items_count?.folders ?? getDirectSubfoldersCount(folder.id, allFolders)
+                    const articlesCount = folder.items_count?.articles ?? getDirectArticlesCount(folder.id, articles)
+                    const totalCount = foldersCount + articlesCount
+                    
+                    // Форматирование метаданных
+                    const metaParts: string[] = []
+                    if (foldersCount > 0) {
+                      metaParts.push(`${foldersCount} folder${foldersCount !== 1 ? 's' : ''}`)
+                    }
+                    if (articlesCount > 0) {
+                      metaParts.push(`${articlesCount} article${articlesCount !== 1 ? 's' : ''}`)
+                    }
+                    if (totalCount === 0) {
+                      metaParts.push('Empty folder')
+                    }
+                    
+                    const metaText = metaParts.join(', ')
+                    const updatedAt = folder.updated_at ? formatRelativeDate(folder.updated_at) : null
+                    const isLastFolder = folderIndex === sortedFolders.length - 1 && sortedArticles.length === 0 && !selectedFolderId
 
-              return (
-                <div
-                  key={article.id}
-                  className="group flex items-center px-4 py-3 border-b border-gray-100 bg-white hover:bg-gray-50 cursor-pointer transition-colors min-h-[56px]"
-                  onClick={() => onEditArticle(article)}
-                >
-                  <div className="flex-shrink-0 mr-3">
-                    <FileText className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col">
-                    <span className="text-sm font-medium text-gray-700 truncate">
-                      {title}
-                    </span>
-                    <span className="text-xs text-gray-400 truncate mt-0.5">
-                      {article.type === 'manual'
-                        ? `Updated ${formatRelativeDate(article.created_at)} by ${article.created_by}`
-                        : `Ticket Source • ${formatRelativeDate(article.created_at)}`}
-                    </span>
-                  </div>
-                  <div className="ml-4 flex-shrink-0 flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onEditArticle(article)
-                      }}
-                      className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-                      title="Edit Article"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleContextMenu(e, article, 'article')
-                      }}
-                      className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-                      title="More options"
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
+                    return (
+                      <tr
+                        key={folder.id}
+                        className={`bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors h-14 cursor-pointer ${
+                          isLastFolder ? 'border-b-0' : ''
+                        }`}
+                        onClick={() => onFolderSelect(folder.id)}
+                      >
+                        <td className="px-6 py-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            {totalCount === 0 ? (
+                              <FolderOpen className="w-5 h-5 text-blue-600" />
+                            ) : (
+                              <Folder className="w-5 h-5 text-blue-600" />
+                            )}
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-900">{folder.name}</span>
+                              <span className="text-xs text-gray-500 mt-0.5">
+                                {metaText}
+                                {folder.description && (
+                                  <>
+                                    {metaText && ' • '}
+                                    {folder.description}
+                                  </>
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-3 text-sm text-gray-500">
+                          {updatedAt || ''}
+                        </td>
+                        <td className="px-6 py-3 text-sm text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleContextMenu(e, folder, 'folder')
+                              }}
+                              className="text-gray-400 hover:text-gray-600 transition-colors"
+                              title="More options"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+
+                  {/* Articles */}
+                  {sortedArticles.map((article, articleIndex) => {
+                    const title = getFirstLine(article.body)
+                    const isLastArticle = articleIndex === sortedArticles.length - 1
+
+                    return (
+                      <tr
+                        key={article.id}
+                        className={`bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors h-14 cursor-pointer ${
+                          isLastArticle ? 'border-b-0' : ''
+                        }`}
+                        onClick={() => onEditArticle(article)}
+                      >
+                        <td className="px-6 py-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-gray-400" />
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-900">{title}</span>
+                              <span className="text-xs text-gray-500 mt-0.5">
+                                {article.type === 'manual'
+                                  ? `Updated ${formatRelativeDate(article.created_at)} by ${article.created_by}`
+                                  : `Ticket Source • ${formatRelativeDate(article.created_at)}`}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-3 text-sm text-gray-500">
+                          {formatRelativeDate(article.created_at)}
+                        </td>
+                        <td className="px-6 py-3 text-sm text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onEditArticle(article)
+                              }}
+                              className="text-gray-400 hover:text-gray-600 transition-colors"
+                              title="Edit Article"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleContextMenu(e, article, 'article')
+                              }}
+                              className="text-gray-400 hover:text-gray-600 transition-colors"
+                              title="More options"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-[#e2e8f0] p-12 text-center">
+          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
             {searchQuery ? (
               <>
                 <FileEdit className="h-16 w-16 text-gray-300 mx-auto mb-4" />

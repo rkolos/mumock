@@ -79,7 +79,7 @@ export default function AllContentView({
     ...files.map((file) => ({
       id: file.id,
       type: 'file' as const,
-      icon: <File className="h-5 w-5 text-black" />,
+      icon: <File className="h-5 w-5 text-gray-400" />,
       content: file.name,
       source: 'File',
       date: formatDate(file.uploadDate),
@@ -89,7 +89,7 @@ export default function AllContentView({
     ...tickets.map((ticket) => ({
       id: ticket.id,
       type: 'ticket' as const,
-      icon: <Ticket className="h-5 w-5 text-black" />,
+      icon: <Ticket className="h-5 w-5 text-purple-500" />,
       content: getSnippet(ticket.content),
       source: 'Ticket',
       date: formatDate(ticket.created_at),
@@ -99,7 +99,7 @@ export default function AllContentView({
     ...articles.map((article) => ({
       id: article.id,
       type: 'article' as const,
-      icon: <BookOpen className="h-5 w-5 text-black" />,
+      icon: <BookOpen className="h-5 w-5 text-gray-400" />,
       content: getFirstLine(article.body),
       source: article.type === 'manual' ? 'Internal Article' : 'Ticket',
       date: formatDate(article.created_at),
@@ -169,22 +169,22 @@ export default function AllContentView({
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Top Bar */}
-      <div className="p-4 border-b border-[#e2e8f0] bg-white">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">All Content</h2>
-        </div>
+    <div className="flex flex-col h-full w-full p-6">
+      {/* Page Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900">All Content</h1>
+      </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      {/* Toolbar */}
+      <div className="flex items-center gap-4 mt-6 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search"
-            className="w-full pl-10 pr-4 py-2 border border-[#e2e8f0] rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+            placeholder="Search..."
+            className="w-full pl-10 pr-4 h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
       </div>
@@ -192,102 +192,109 @@ export default function AllContentView({
       {/* Content Table */}
       <div className="flex-1 overflow-y-auto bg-white">
         {sortedItems.length > 0 ? (
-          <div className="p-4">
+          <div>
             <div className="text-sm text-gray-600 mb-4">
               {sortedItems.length} items
             </div>
-            <div className="border border-[#e2e8f0] rounded-lg overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-[#e2e8f0]">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Content
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Source
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-[#e2e8f0]">
-                  {sortedItems.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        <button
-                          onClick={() => handleContentClick(item)}
-                          className="text-left w-full transition-colors cursor-pointer"
-                        >
-                          {(item.type === 'ticket' || item.type === 'article') && (
-                            <span className="text-blue-600 hover:text-blue-700 hover:underline">
-                              {item.content}
-                            </span>
-                          )}
-                          {item.type === 'file' && (
-                            <span className="hover:underline">{item.content}</span>
-                          )}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          {item.icon}
-                          <span>{item.source}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{item.date}</td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${
-                            item.status === 'Indexed'
-                              ? 'bg-green-100 text-green-800'
-                              : item.status === 'Indexing...'
-                                ? 'bg-orange-100 text-orange-800'
-                                : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {item.type === 'file' && (
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mt-4">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        CONTENT
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        SOURCE
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        DATE
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        STATUS
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ACTIONS
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {sortedItems.map((item, index) => (
+                      <tr 
+                        key={item.id} 
+                        className={`bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors h-14 ${
+                          index === sortedItems.length - 1 ? 'border-b-0' : ''
+                        }`}
+                      >
+                        <td className="px-6 py-3 text-sm">
+                          <button
+                            onClick={() => handleContentClick(item)}
+                            className="text-left w-full transition-colors cursor-pointer"
+                          >
+                            {(item.type === 'ticket' || item.type === 'article') && (
+                              <span className="font-medium text-gray-900 hover:text-blue-600">
+                                {item.content}
+                              </span>
+                            )}
+                            {item.type === 'file' && (
+                              <span className="font-medium text-gray-900 hover:text-blue-600">{item.content}</span>
+                            )}
+                          </button>
+                        </td>
+                        <td className="px-6 py-3 text-sm text-gray-500">
+                          <div className="flex items-center gap-2">
+                            {item.icon}
+                            <span>{item.source}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-3 text-sm text-gray-500">{item.date}</td>
+                        <td className="px-6 py-3">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${
+                              item.status === 'Indexed'
+                                ? 'bg-green-100 text-green-800'
+                                : item.status === 'Indexing...'
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 text-sm text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {item.type === 'file' && (
+                              <button
+                                onClick={() => {
+                                  const link = document.createElement('a')
+                                  link.href = '#'
+                                  link.download = (item.original as KnowledgeFile).name
+                                  link.click()
+                                }}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                                title="Download"
+                              >
+                                <Download className="h-4 w-4" />
+                              </button>
+                            )}
                             <button
                               onClick={() => {
-                                const link = document.createElement('a')
-                                link.href = '#'
-                                link.download = (item.original as KnowledgeFile).name
-                                link.click()
+                                if (confirm('Вы уверены, что хотите удалить этот элемент?')) {
+                                  handleDelete(item)
+                                }
                               }}
-                              className="text-gray-600 hover:text-gray-900 transition-colors"
-                              title="Download"
+                              className="text-gray-400 hover:text-red-600 transition-colors"
+                              title="Delete"
                             >
-                              <Download className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" />
                             </button>
-                          )}
-                          <button
-                            onClick={() => {
-                              if (confirm('Вы уверены, что хотите удалить этот элемент?')) {
-                                handleDelete(item)
-                              }
-                            }}
-                            className="text-red-600 hover:text-red-700 transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         ) : (
