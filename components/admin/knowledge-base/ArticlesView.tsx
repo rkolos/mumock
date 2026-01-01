@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { FileEdit, Plus, Search, Trash2, MoreVertical, FolderTree, Folder, ChevronDown, FolderOpen, Edit, CornerUpLeft, X } from 'lucide-react'
+import { FileEdit, Plus, Search, Trash2, MoreVertical, FolderTree, Folder, ChevronDown, FolderOpen, Edit, CornerUpLeft, X, FileText } from 'lucide-react'
 import { KnowledgeArticle, KBFolder } from '../../../data/knowledgeBase'
 import ArticlesBreadcrumbs from './ArticlesBreadcrumbs'
 import MoveArticleDialog from './MoveArticleDialog'
@@ -493,29 +493,47 @@ export default function ArticlesView({
 
             {/* Search Results */}
             {!isSearchLoading && searchResults.length > 0 && (
-              <div className="space-y-1">
+              <div>
                 {searchResults.map((result) => {
                   const pathString = result.path.map(p => p.name).join(' / ')
                   return (
                     <div
                       key={result.id}
-                      className="group flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200 transition-all"
+                      className="group flex items-center px-4 py-3 border-b border-gray-100 bg-white hover:bg-gray-50 cursor-pointer transition-colors min-h-[56px]"
                       onClick={() => handleViewArticle(result.article)}
                     >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        {/* Article Icon */}
-                        <div className="p-2 bg-gray-50 text-gray-500 rounded-md flex-shrink-0">
-                          <FileEdit className="h-5 w-5" />
-                        </div>
-                        {/* Title and Path */}
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-900">
-                            {result.title}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-0.5 truncate">
-                            {pathString}
-                          </div>
-                        </div>
+                      <div className="flex-shrink-0 mr-3">
+                        <FileText className="w-5 h-5 text-gray-400" />
+                      </div>
+                      <div className="flex-1 min-w-0 flex flex-col">
+                        <span className="text-sm font-medium text-gray-700 truncate">
+                          {result.title}
+                        </span>
+                        <span className="text-xs text-gray-400 truncate mt-0.5">
+                          {pathString}
+                        </span>
+                      </div>
+                      <div className="ml-4 flex-shrink-0 flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onEditArticle(result.article)
+                          }}
+                          className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                          title="Edit Article"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleContextMenu(e, result.article, 'article')
+                          }}
+                          className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                          title="More options"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                   )
@@ -537,26 +555,22 @@ export default function ArticlesView({
             )}
           </div>
         ) : hasItems || showParentRow ? (
-          <div className="space-y-1">
+          <div>
             {/* Parent Row - Go Up */}
             {selectedFolderId !== null && (
               <div
-                className="group flex items-center justify-between p-3 hover:bg-gray-100 rounded-lg cursor-pointer border border-transparent hover:border-gray-200 transition-all"
+                className="group flex items-center px-4 py-3 border-b border-gray-100 bg-white hover:bg-gray-50 cursor-pointer transition-colors min-h-[56px]"
                 onClick={() => onFolderSelect(parentFolder?.id || null)}
               >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  {/* Go Up Icon */}
-                  <div className="p-2 bg-gray-50 text-gray-500 rounded-md flex-shrink-0">
-                    <CornerUpLeft className="h-5 w-5" />
-                  </div>
-                  {/* Go Up Text */}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm text-gray-600">
-                      {parentFolder 
-                        ? `.. (Go up to "${parentFolder.name}")`
-                        : '.. (Go up)'}
-                    </div>
-                  </div>
+                <div className="flex-shrink-0 mr-3">
+                  <CornerUpLeft className="w-5 h-5 text-gray-400" />
+                </div>
+                <div className="flex-1 min-w-0 flex flex-col">
+                  <span className="text-sm font-medium text-gray-900">
+                    {parentFolder 
+                      ? `.. (Go up to "${parentFolder.name}")`
+                      : '.. (Go up)'}
+                  </span>
                 </div>
               </div>
             )}
@@ -580,55 +594,52 @@ export default function ArticlesView({
                 metaParts.push('Empty folder')
               }
               
-              const metaText = metaParts.join(' • ')
+              const metaText = metaParts.join(', ')
               const updatedAt = folder.updated_at ? formatRelativeDate(folder.updated_at) : null
 
               return (
                 <div
                   key={folder.id}
-                  className="group flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200 transition-all"
+                  className="group flex items-center px-4 py-3 border-b border-gray-100 bg-white hover:bg-gray-50 cursor-pointer transition-colors min-h-[56px]"
                   onClick={() => onFolderSelect(folder.id)}
                 >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    {/* Folder Icon - Larger */}
-                    <div className="p-2.5 bg-amber-50 text-amber-500 rounded-md flex-shrink-0">
-                      <Folder className="h-6 w-6" />
-                    </div>
-                    {/* Folder Name and Meta */}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-gray-900 mb-0.5">
-                        {folder.name}
-                      </div>
-                      <div className="text-xs text-gray-500 truncate">
-                        {metaText}
-                        {folder.description && (
-                          <>
-                            {metaText && ' • '}
-                            {folder.description}
-                          </>
-                        )}
-                      </div>
-                    </div>
+                  <div className="flex-shrink-0 mr-3">
+                    {totalCount === 0 ? (
+                      <FolderOpen className="w-5 h-5 text-blue-600 fill-blue-50" />
+                    ) : (
+                      <Folder className="w-5 h-5 text-blue-600 fill-blue-50" />
+                    )}
                   </div>
-                  {/* Updated Date and Actions */}
-                  <div className="flex items-center gap-3 ml-2">
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    <span className="text-sm font-medium text-gray-900 truncate">
+                      {folder.name}
+                    </span>
+                    <span className="text-xs text-gray-500 truncate mt-0.5">
+                      {metaText}
+                      {folder.description && (
+                        <>
+                          {metaText && ' • '}
+                          {folder.description}
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  <div className="ml-4 flex-shrink-0 flex items-center gap-3">
                     {updatedAt && (
                       <span className="text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
                         {updatedAt}
                       </span>
                     )}
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleContextMenu(e, folder, 'folder')
-                        }}
-                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                        title="More options"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleContextMenu(e, folder, 'folder')
+                      }}
+                      className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors opacity-0 group-hover:opacity-100"
+                      title="More options"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               )
@@ -641,49 +652,42 @@ export default function ArticlesView({
               return (
                 <div
                   key={article.id}
-                  className="group flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200 transition-all"
+                  className="group flex items-center px-4 py-3 border-b border-gray-100 bg-white hover:bg-gray-50 cursor-pointer transition-colors min-h-[56px]"
                   onClick={() => onEditArticle(article)}
                 >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    {/* Article Icon */}
-                    <div className="p-2 bg-gray-50 text-gray-500 rounded-md flex-shrink-0">
-                      <FileEdit className="h-5 w-5" />
-                    </div>
-                    {/* Title and Metadata */}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900">
-                        {title}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-0.5">
-                        {article.type === 'manual'
-                          ? `Updated ${formatRelativeDate(article.created_at)} by ${article.created_by}`
-                          : `Ticket Source • ${formatRelativeDate(article.created_at)}`}
-                      </div>
-                    </div>
+                  <div className="flex-shrink-0 mr-3">
+                    <FileText className="w-5 h-5 text-gray-400" />
                   </div>
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-2 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    <span className="text-sm font-medium text-gray-700 truncate">
+                      {title}
+                    </span>
+                    <span className="text-xs text-gray-400 truncate mt-0.5">
+                      {article.type === 'manual'
+                        ? `Updated ${formatRelativeDate(article.created_at)} by ${article.created_by}`
+                        : `Ticket Source • ${formatRelativeDate(article.created_at)}`}
+                    </span>
+                  </div>
+                  <div className="ml-4 flex-shrink-0 flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onEditArticle(article)
+                      }}
+                      className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                      title="Edit Article"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
                         handleContextMenu(e, article, 'article')
                       }}
-                      className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                      className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
                       title="More options"
                     >
                       <MoreVertical className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (confirm('Вы уверены, что хотите удалить эту статью?')) {
-                          onDeleteArticle(article.id)
-                        }
-                      }}
-                      className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                      title="Delete Article"
-                    >
-                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
