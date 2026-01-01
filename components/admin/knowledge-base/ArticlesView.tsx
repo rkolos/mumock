@@ -404,42 +404,43 @@ export default function ArticlesView({
             </div>
           )}
         </div>
-        {!isSearchActive && (
-          <div className="relative" ref={newDropdownRef}>
-            <button
-              onClick={() => setNewDropdownOpen(!newDropdownOpen)}
-              className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 text-sm font-medium rounded-md transition-colors flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              <span>New</span>
-              <ChevronDown className="h-4 w-4" />
-            </button>
-            {newDropdownOpen && (
-              <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
-                <button
-                  onClick={() => {
-                    onNewArticle()
-                    setNewDropdownOpen(false)
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                >
-                  <FileEdit className="h-4 w-4" />
-                  New Article
-                </button>
-                <button
-                  onClick={() => {
-                    onNewFolder(selectedFolderId)
-                    setNewDropdownOpen(false)
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                >
-                  <Folder className="h-4 w-4" />
-                  New Folder
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+        <div className="relative" ref={newDropdownRef}>
+          <button
+            onClick={() => setNewDropdownOpen(!newDropdownOpen)}
+            disabled={isSearchActive}
+            className={`bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
+              isSearchActive ? 'invisible pointer-events-none' : ''
+            }`}
+          >
+            <Plus className="h-4 w-4" />
+            <span>New</span>
+            <ChevronDown className="h-4 w-4" />
+          </button>
+          {newDropdownOpen && !isSearchActive && (
+            <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
+              <button
+                onClick={() => {
+                  onNewArticle()
+                  setNewDropdownOpen(false)
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              >
+                <FileEdit className="h-4 w-4" />
+                New Article
+              </button>
+              <button
+                onClick={() => {
+                  onNewFolder(selectedFolderId)
+                  setNewDropdownOpen(false)
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              >
+                <Folder className="h-4 w-4" />
+                New Folder
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Toolbar */}
