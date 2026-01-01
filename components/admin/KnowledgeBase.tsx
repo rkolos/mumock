@@ -56,11 +56,11 @@ export default function KnowledgeBase() {
   // Преобразуем тикеты в единый формат статей
   const ticketArticles: KnowledgeArticle[] = mockKnowledgeTickets.map((ticket) => ({
     id: ticket.id,
-    title: ticket.source_ticket_display,
-    content: ticket.content,
+    body: ticket.content,
     created_at: ticket.created_at,
     created_by: 'System',
     type: 'ticket' as const,
+    folder_id: null,
     source_ticket_id: ticket.source_ticket_id,
     source_ticket_display: ticket.source_ticket_display,
   }))
@@ -69,43 +69,43 @@ export default function KnowledgeBase() {
   const manualArticles: KnowledgeArticle[] = [
     {
       id: 'manual_001',
-      title: 'How to configure SMTP settings',
-      content: 'Для настройки SMTP необходимо выполнить следующие шаги:\n\n1. Перейдите в настройки системы\n2. Найдите раздел "Email Configuration"\n3. Введите данные SMTP сервера:\n   - Host: smtp.example.com\n   - Port: 587\n   - Username: your-email@example.com\n   - Password: your-password\n   - Enable TLS: Yes\n\n4. Сохраните настройки и протестируйте отправку тестового письма.\n\nВажно: Убедитесь, что порт 587 не заблокирован файрволом.',
+      body: '# How to configure SMTP settings\n\nДля настройки SMTP необходимо выполнить следующие шаги:\n\n1. Перейдите в настройки системы\n2. Найдите раздел "Email Configuration"\n3. Введите данные SMTP сервера:\n   - Host: smtp.example.com\n   - Port: 587\n   - Username: your-email@example.com\n   - Password: your-password\n   - Enable TLS: Yes\n\n4. Сохраните настройки и протестируйте отправку тестового письма.\n\nВажно: Убедитесь, что порт 587 не заблокирован файрволом.',
       created_at: '2025-11-10T09:15:00Z',
       created_by: 'Admin',
       type: 'manual',
+      folder_id: null,
     },
     {
       id: 'manual_002',
-      title: 'API Rate Limits and Best Practices',
-      content: 'Наша система API имеет следующие лимиты:\n\n- Free tier: 100 запросов в час\n- Pro tier: 1000 запросов в час\n- Enterprise: безлимит\n\nРекомендации по работе с API:\n1. Используйте экспоненциальную задержку при получении ошибки 429\n2. Кэшируйте результаты запросов, когда это возможно\n3. Используйте webhooks вместо polling для получения обновлений\n4. Реализуйте retry логику с максимальным количеством попыток\n\nПример кода для обработки rate limit:\n```\nif (response.status === 429) {\n  const retryAfter = response.headers["Retry-After"] || 60;\n  await sleep(retryAfter * 1000);\n  return retryRequest();\n}\n```',
+      body: '# API Rate Limits and Best Practices\n\nНаша система API имеет следующие лимиты:\n\n- Free tier: 100 запросов в час\n- Pro tier: 1000 запросов в час\n- Enterprise: безлимит\n\nРекомендации по работе с API:\n1. Используйте экспоненциальную задержку при получении ошибки 429\n2. Кэшируйте результаты запросов, когда это возможно\n3. Используйте webhooks вместо polling для получения обновлений\n4. Реализуйте retry логику с максимальным количеством попыток\n\nПример кода для обработки rate limit:\n```\nif (response.status === 429) {\n  const retryAfter = response.headers["Retry-After"] || 60;\n  await sleep(retryAfter * 1000);\n  return retryRequest();\n}\n```',
       created_at: '2025-11-11T14:30:00Z',
       created_by: 'Support Team',
       type: 'manual',
+      folder_id: null,
     },
     {
       id: 'manual_003',
-      title: 'Two-Factor Authentication Setup Guide',
-      content: 'Настройка двухфакторной аутентификации (2FA):\n\n1. Войдите в свой аккаунт\n2. Перейдите в "Security Settings"\n3. Нажмите "Enable 2FA"\n4. Отсканируйте QR-код приложением-аутентификатором (Google Authenticator, Authy)\n5. Введите код подтверждения из приложения\n6. Сохраните резервные коды в безопасном месте\n\nРекомендуемые приложения:\n- Google Authenticator\n- Microsoft Authenticator\n- Authy\n\nЕсли вы потеряли доступ к устройству с 2FA, используйте резервные коды или обратитесь в поддержку.',
+      body: '# Two-Factor Authentication Setup Guide\n\nНастройка двухфакторной аутентификации (2FA):\n\n1. Войдите в свой аккаунт\n2. Перейдите в "Security Settings"\n3. Нажмите "Enable 2FA"\n4. Отсканируйте QR-код приложением-аутентификатором (Google Authenticator, Authy)\n5. Введите код подтверждения из приложения\n6. Сохраните резервные коды в безопасном месте\n\nРекомендуемые приложения:\n- Google Authenticator\n- Microsoft Authenticator\n- Authy\n\nЕсли вы потеряли доступ к устройству с 2FA, используйте резервные коды или обратитесь в поддержку.',
       created_at: '2025-11-12T10:45:00Z',
       created_by: 'Admin',
       type: 'manual',
+      folder_id: null,
     },
     {
       id: 'manual_004',
-      title: 'Database Backup and Recovery Procedures',
-      content: 'Процедуры резервного копирования и восстановления базы данных:\n\nАвтоматические бэкапы:\n- Полные бэкапы: ежедневно в 02:00 UTC\n- Инкрементальные бэкапы: каждые 6 часов\n- Хранение: 30 дней для полных, 7 дней для инкрементальных\n\nРучное восстановление:\n1. Определите нужную точку восстановления\n2. Остановите приложение\n3. Восстановите базу данных из бэкапа\n4. Проверьте целостность данных\n5. Запустите приложение\n\nКоманда для восстановления:\n```\npg_restore -d database_name backup_file.dump\n```\n\nВажно: Всегда тестируйте восстановление на тестовой среде перед применением в продакшене.',
+      body: '# Database Backup and Recovery Procedures\n\nПроцедуры резервного копирования и восстановления базы данных:\n\nАвтоматические бэкапы:\n- Полные бэкапы: ежедневно в 02:00 UTC\n- Инкрементальные бэкапы: каждые 6 часов\n- Хранение: 30 дней для полных, 7 дней для инкрементальных\n\nРучное восстановление:\n1. Определите нужную точку восстановления\n2. Остановите приложение\n3. Восстановите базу данных из бэкапа\n4. Проверьте целостность данных\n5. Запустите приложение\n\nКоманда для восстановления:\n```\npg_restore -d database_name backup_file.dump\n```\n\nВажно: Всегда тестируйте восстановление на тестовой среде перед применением в продакшене.',
       created_at: '2025-11-13T16:20:00Z',
       created_by: 'DevOps Team',
       type: 'manual',
+      folder_id: null,
     },
     {
       id: 'manual_005',
-      title: 'Webhook Configuration and Testing',
-      content: 'Настройка webhook для получения уведомлений:\n\n1. Создайте endpoint на вашем сервере для приема webhook\n2. В настройках API создайте новый webhook:\n   - URL: https://your-domain.com/webhook\n   - Events: выберите события для подписки\n   - Secret: сгенерируйте секретный ключ\n\n3. Проверьте подпись запроса:\n```\nconst signature = crypto\n  .createHmac("sha256", secret)\n  .update(JSON.stringify(payload))\n  .digest("hex");\n```\n\n4. Всегда возвращайте 200 OK в течение 5 секунд\n5. Реализуйте идемпотентность для обработки дубликатов\n\nТестирование:\n- Используйте ngrok для локальной разработки\n- Проверяйте логи на наличие ошибок\n- Мониторьте время ответа',
+      body: '# Webhook Configuration and Testing\n\nНастройка webhook для получения уведомлений:\n\n1. Создайте endpoint на вашем сервере для приема webhook\n2. В настройках API создайте новый webhook:\n   - URL: https://your-domain.com/webhook\n   - Events: выберите события для подписки\n   - Secret: сгенерируйте секретный ключ\n\n3. Проверьте подпись запроса:\n```\nconst signature = crypto\n  .createHmac("sha256", secret)\n  .update(JSON.stringify(payload))\n  .digest("hex");\n```\n\n4. Всегда возвращайте 200 OK в течение 5 секунд\n5. Реализуйте идемпотентность для обработки дубликатов\n\nТестирование:\n- Используйте ngrok для локальной разработки\n- Проверяйте логи на наличие ошибок\n- Мониторьте время ответа',
       created_at: '2025-11-14T11:10:00Z',
       created_by: 'Developer',
       type: 'manual',
+      folder_id: null,
     },
   ]
   
@@ -321,6 +321,13 @@ export default function KnowledgeBase() {
   }
 
 
+  // Получение первой строки из body (заголовок)
+  const getFirstLine = (body: string): string => {
+    const firstLine = body.split('\n')[0].trim()
+    if (!firstLine) return 'Untitled'
+    return firstLine.replace(/^#+\s*/, '') // Убираем markdown заголовки
+  }
+
   // Получение сниппета текста
   const getSnippet = (text: string, maxLength: number = 120): string => {
     if (text.length <= maxLength) return text
@@ -373,11 +380,11 @@ export default function KnowledgeBase() {
 
     const newArticle: KnowledgeArticle = {
       id: `article_${Date.now()}_${Math.random()}`,
-      title: newArticleTitle,
-      content: newArticleContent,
+      body: `# ${newArticleTitle}\n\n${newArticleContent}`,
       created_at: new Date().toISOString(),
       created_by: 'You',
       type: 'manual',
+      folder_id: null,
     }
 
     // Добавляем в начало списка (Optimistic UI)
@@ -801,18 +808,18 @@ export default function KnowledgeBase() {
                                 {/* Title and Metadata */}
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
-                                    {article.type === 'ticket' && article.source_ticket_id ? (
+                                    {article.type === 'ticket' && article.source_ticket_id && article.source_ticket_display ? (
                                       <Link
                                         href={`/tickets/${article.source_ticket_id.replace('ticket-', '')}`}
                                         target="_blank"
                                         onClick={(e) => e.stopPropagation()}
                                         className="text-blue-600 hover:text-blue-700 font-medium text-sm"
                                       >
-                                        #{article.source_ticket_id.replace('ticket-', '')}: {article.title.replace(/#\d+/, '').trim()}
+                                        {article.source_ticket_display.replace(/#\d+/, '').trim()}
                                       </Link>
                                     ) : (
                                       <span className="font-medium text-sm text-gray-900">
-                                        {article.title}
+                                        {getFirstLine(article.body)}
                                       </span>
                                     )}
                                   </div>
@@ -853,7 +860,7 @@ export default function KnowledgeBase() {
                                     Knowledge Content
                                   </label>
                                   <div className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg bg-white font-mono text-sm whitespace-pre-wrap">
-                                    {article.content}
+                                    {article.body}
                                   </div>
                                 </div>
                               </div>
