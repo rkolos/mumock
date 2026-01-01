@@ -11,10 +11,12 @@
     "check": "npm run type-check && npm run lint"
   },
   "dependencies": {
+    "lucide-react": "^0.294.0",
     "next": "^15.1.6",
     "react": "^18.3.1",
+    "react-arborist": "^3.4.3",
     "react-dom": "^18.3.1",
-    "lucide-react": "^0.294.0"
+    "react-resizable-panels": "^4.1.1"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -26,4 +28,3 @@
     "typescript": "^5"
   }
 }
-

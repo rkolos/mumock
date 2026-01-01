@@ -19,13 +19,26 @@ export interface KnowledgeTicket {
   content: string
 }
 
+export interface KBFolder {
+  id: string
+  name: string
+  parent_id: string | null
+  organization_id?: string
+  description?: string
+  items_count?: {
+    folders: number
+    articles: number
+  }
+  updated_at?: string
+}
+
 export interface KnowledgeArticle {
   id: string
-  title: string
-  content: string
+  body: string
   created_at: string
   created_by: string
   type: 'manual' | 'ticket'
+  folder_id: string | null
   // Для тикетов
   source_ticket_id?: string
   source_ticket_display?: string
@@ -259,6 +272,34 @@ export const mockKnowledgeTickets: KnowledgeTicket[] = [
     source_ticket_display: 'API Authentication #3457',
     created_at: '2025-11-08',
     content: 'API ключи истекали без уведомления пользователей, что приводило к неожиданным ошибкам. Решение: добавить поле "expires_at" для ключей, отправлять email уведомления за 7, 3 и 1 день до истечения. Разрешить создание ключей без срока действия.',
+  },
+]
+
+export const mockKnowledgeFolders: KBFolder[] = [
+  {
+    id: 'folder_001',
+    name: 'General',
+    parent_id: null,
+  },
+  {
+    id: 'folder_002',
+    name: 'Engineering',
+    parent_id: null,
+  },
+  {
+    id: 'folder_003',
+    name: 'API Docs',
+    parent_id: 'folder_002',
+  },
+  {
+    id: 'folder_004',
+    name: 'Servers',
+    parent_id: 'folder_002',
+  },
+  {
+    id: 'folder_005',
+    name: 'HR',
+    parent_id: null,
   },
 ]
 
