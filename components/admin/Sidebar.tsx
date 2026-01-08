@@ -18,9 +18,12 @@ import {
   ChevronDown,
   Brain,
   Zap,
+  Lightbulb,
 } from 'lucide-react'
 import { useWidget } from '../../contexts/WidgetContext'
 import { useEffect, useState, useRef } from 'react'
+import { mockSuggestions } from '../../data/suggestions'
+import { mockTickets } from '../../data/tickets'
 
 interface SidebarProps {
   isOpen: boolean
@@ -32,6 +35,12 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
   const pathname = usePathname()
   const { setCurrentSection } = useWidget()
   const [organizationDropdownOpen, setOrganizationDropdownOpen] = useState(false)
+  
+  // Подсчет предложений в статусе New
+  const newSuggestionsCount = mockSuggestions.filter(s => s.lifecycle.status === 'New').length
+  
+  // Подсчет тикетов в статусе open (аналог New)
+  const newTicketsCount = mockTickets.filter(t => t.status === 'open').length
 
   // Обновляем текущий раздел при изменении pathname
   useEffect(() => {
@@ -39,6 +48,7 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       '/': 'tickets',
       '/statuses': 'statuses',
       '/tags': 'tags',
+      '/suggestions': 'suggestions',
       '/categories': 'categories',
       '/knowledge-base': 'knowledge-base',
       '/panels': 'panels',
@@ -84,6 +94,7 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       { name: 'Tickets', href: '/', icon: UserCog },
       { name: 'Statuses', href: '/statuses', icon: ListChecks },
       { name: 'Tags', href: '/tags', icon: Tag },
+      { name: 'Suggestions', href: '/suggestions', icon: Lightbulb },
     ],
     system: [
       { name: 'Panels', href: '/panels', icon: ShieldCheck },
@@ -179,6 +190,10 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
               {navItems.main.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname === item.href
+                const showSuggestionsCount = item.href === '/suggestions' && newSuggestionsCount > 0
+                const showTicketsCount = item.href === '/' && newTicketsCount > 0
+                const count = item.href === '/suggestions' ? newSuggestionsCount : item.href === '/' ? newTicketsCount : 0
+                const showCount = showSuggestionsCount || showTicketsCount
                 return (
                   <Link
                     key={item.href}
@@ -195,7 +210,19 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
                     `}
                   >
                     <Icon className="h-5 w-5" />
-                    <span>{item.name}</span>
+                    <span className="flex-1">{item.name}</span>
+                    {showCount && (
+                      <span className={`
+                        px-2 py-0.5 text-xs font-semibold rounded-full
+                        ${
+                          isActive
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-slate-600 text-white'
+                        }
+                      `}>
+                        {count}
+                      </span>
+                    )}
                   </Link>
                 )
               })}
