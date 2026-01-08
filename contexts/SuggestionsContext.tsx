@@ -141,7 +141,11 @@ export function SuggestionsProvider({ children }: { children: ReactNode }) {
   }, [suggestions, getSuggestionById])
 
   const dismissSimilarSuggestions = useCallback((suggestionId: string) => {
-    setDismissedSimilar(prev => new Set([...prev, suggestionId]))
+    setDismissedSimilar(prev => {
+      const next = new Set(prev)
+      next.add(suggestionId)
+      return next
+    })
   }, [])
 
   // Lazy загрузка настроек при открытии модального окна
