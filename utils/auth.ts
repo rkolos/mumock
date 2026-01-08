@@ -18,7 +18,7 @@ export function hasAdminAccess(userRole?: UserRole): boolean {
 
   // По умолчанию проверяем, что текущий пользователь имеет роль Owner
   // В реальном приложении это будет извлекаться из контекста/сессии
-  const currentUserRole: UserRole = 'Owner' // Мок-данные из Header.tsx
+  const currentUserRole = 'Owner' as UserRole // Мок-данные из Header.tsx
   return currentUserRole === 'Admin' || currentUserRole === 'Manager' || currentUserRole === 'Owner'
 }
 
