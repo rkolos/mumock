@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
 import { Suggestion, SuggestionStatus, mockSuggestions } from '../data/suggestions'
 import {
   SuggestionsConfig,
@@ -27,6 +27,9 @@ interface SuggestionsContextType {
   updateSuggestionCategory: (id: string, category: string) => void
   mergeSuggestion: (id: string, mergedInto: string) => void
   createSuggestion: (suggestion: Suggestion) => void
+  deleteSuggestions: (ids: string[]) => void
+  bulkUpdateStatus: (ids: string[], status: SuggestionStatus) => void
+  bulkMergeSuggestions: (sourceIds: string[], targetId: string) => void
   getFilteredSuggestions: () => Suggestion[]
   getSimilarSuggestions: (suggestionId: string) => Suggestion[]
   dismissSimilarSuggestions: (suggestionId: string) => void
@@ -40,12 +43,38 @@ interface SuggestionsContextType {
 const SuggestionsContext = createContext<SuggestionsContextType | undefined>(undefined)
 
 export function SuggestionsProvider({ children }: { children: ReactNode }) {
+  // Загружаем состояние из localStorage при инициализации
+  const getInitialStatus = (): SuggestionStatus | 'All' => {
+    if (typeof window === 'undefined') return 'All'
+    const saved = localStorage.getItem('suggestions_activeStatus')
+    return (saved as SuggestionStatus | 'All') || 'All'
+  }
+
+  const getInitialSearchQuery = (): string => {
+    if (typeof window === 'undefined') return ''
+    return localStorage.getItem('suggestions_searchQuery') || ''
+  }
+
   const [suggestions, setSuggestions] = useState<Suggestion[]>(mockSuggestions)
   const [selectedSuggestionId, setSelectedSuggestionId] = useState<string | null>(null)
-  const [activeStatus, setActiveStatus] = useState<SuggestionStatus | 'All'>('New')
-  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [activeStatus, setActiveStatus] = useState<SuggestionStatus | 'All'>(getInitialStatus)
+  const [searchQuery, setSearchQuery] = useState<string>(getInitialSearchQuery)
   const [dismissedSimilar, setDismissedSimilar] = useState<Set<string>>(new Set())
   const [settings, setSettings] = useState<SuggestionsConfig | null>(null)
+
+  // Сохраняем activeStatus в localStorage при изменении
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('suggestions_activeStatus', activeStatus)
+    }
+  }, [activeStatus])
+
+  // Сохраняем searchQuery в localStorage при изменении
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('suggestions_searchQuery', searchQuery)
+    }
+  }, [searchQuery])
 
   const getSuggestionById = useCallback((id: string): Suggestion | undefined => {
     return suggestions.find(s => s.id === id)
@@ -84,6 +113,35 @@ export function SuggestionsProvider({ children }: { children: ReactNode }) {
 
   const createSuggestion = useCallback((suggestion: Suggestion) => {
     setSuggestions(prev => [suggestion, ...prev])
+  }, [])
+
+  const deleteSuggestions = useCallback((ids: string[]) => {
+    setSuggestions(prev => prev.filter(s => !ids.includes(s.id)))
+    // Если удаляем выбранное предложение, сбрасываем выбор
+    setSelectedSuggestionId(prevId => prevId && ids.includes(prevId) ? null : prevId)
+  }, [])
+
+  const bulkUpdateStatus = useCallback((ids: string[], status: SuggestionStatus) => {
+    setSuggestions(prev => prev.map(s => 
+      ids.includes(s.id)
+        ? { ...s, lifecycle: { ...s.lifecycle, status } }
+        : s
+    ))
+  }, [])
+
+  const bulkMergeSuggestions = useCallback((sourceIds: string[], targetId: string) => {
+    setSuggestions(prev => prev.map(s => 
+      sourceIds.includes(s.id)
+        ? { 
+            ...s, 
+            lifecycle: { 
+              ...s.lifecycle, 
+              status: 'Duplicate' as SuggestionStatus,
+              merged_into: targetId 
+            } 
+          }
+        : s
+    ))
   }, [])
 
   const getFilteredSuggestions = useCallback((): Suggestion[] => {
@@ -211,6 +269,9 @@ export function SuggestionsProvider({ children }: { children: ReactNode }) {
         updateSuggestionCategory,
         mergeSuggestion,
         createSuggestion,
+        deleteSuggestions,
+        bulkUpdateStatus,
+        bulkMergeSuggestions,
         getFilteredSuggestions,
         getSimilarSuggestions,
         dismissSimilarSuggestions,

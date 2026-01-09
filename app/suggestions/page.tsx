@@ -4,8 +4,7 @@ import { useState } from 'react'
 import Sidebar from '../../components/admin/Sidebar'
 import Header from '../../components/admin/Header'
 import { SuggestionsProvider } from '../../contexts/SuggestionsContext'
-import SuggestionsList from '../../components/admin/SuggestionsList'
-import SuggestionDetail from '../../components/admin/SuggestionDetail'
+import SuggestionsListTable from '../../components/admin/SuggestionsListTable'
 
 export default function SuggestionsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -16,16 +15,8 @@ export default function SuggestionsPage() {
         <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
-          <main className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
-            {/* Левая панель - Список */}
-            <div className="w-[400px] border-r border-[#e2e8f0] bg-white flex flex-col overflow-hidden">
-              <SuggestionsList />
-            </div>
-            
-            {/* Правая панель - Детали */}
-            <div className="flex-1 bg-white flex flex-col overflow-hidden">
-              <SuggestionDetail />
-            </div>
+          <main className="flex-1 overflow-y-auto">
+            <SuggestionsListTable />
           </main>
         </div>
       </div>
