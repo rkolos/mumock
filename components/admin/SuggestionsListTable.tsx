@@ -45,8 +45,6 @@ export default function SuggestionsListTable() {
 
   // Закрытие dropdown при клике вне его
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    
     const handleClickOutside = (event: MouseEvent) => {
       if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
         setFilterMenuOpen(false)
