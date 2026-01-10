@@ -43,24 +43,27 @@ interface SuggestionsContextType {
 const SuggestionsContext = createContext<SuggestionsContextType | undefined>(undefined)
 
 export function SuggestionsProvider({ children }: { children: ReactNode }) {
-  // Загружаем состояние из localStorage при инициализации
-  const getInitialStatus = (): SuggestionStatus | 'All' => {
-    if (typeof window === 'undefined') return 'All'
-    const saved = localStorage.getItem('suggestions_activeStatus')
-    return (saved as SuggestionStatus | 'All') || 'All'
-  }
-
-  const getInitialSearchQuery = (): string => {
-    if (typeof window === 'undefined') return ''
-    return localStorage.getItem('suggestions_searchQuery') || ''
-  }
-
   const [suggestions, setSuggestions] = useState<Suggestion[]>(mockSuggestions)
   const [selectedSuggestionId, setSelectedSuggestionId] = useState<string | null>(null)
-  const [activeStatus, setActiveStatus] = useState<SuggestionStatus | 'All'>(getInitialStatus)
-  const [searchQuery, setSearchQuery] = useState<string>(getInitialSearchQuery)
+  const [activeStatus, setActiveStatus] = useState<SuggestionStatus | 'All'>('All')
+  const [searchQuery, setSearchQuery] = useState<string>('')
   const [dismissedSimilar, setDismissedSimilar] = useState<Set<string>>(new Set())
   const [settings, setSettings] = useState<SuggestionsConfig | null>(null)
+
+  // Загружаем состояние из localStorage после монтирования компонента
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedStatus = localStorage.getItem('suggestions_activeStatus')
+      const savedQuery = localStorage.getItem('suggestions_searchQuery')
+      
+      if (savedStatus) {
+        setActiveStatus(savedStatus as SuggestionStatus | 'All')
+      }
+      if (savedQuery) {
+        setSearchQuery(savedQuery)
+      }
+    }
+  }, [])
 
   // Сохраняем activeStatus в localStorage при изменении
   useEffect(() => {

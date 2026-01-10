@@ -41,6 +41,8 @@ export default function SuggestionsCardList({
 
   // Закрытие dropdown при клике вне его
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    
     const handleClickOutside = (event: MouseEvent) => {
       if (searchSettingsRef.current && !searchSettingsRef.current.contains(event.target as Node)) {
         setSearchSettingsOpen(false)

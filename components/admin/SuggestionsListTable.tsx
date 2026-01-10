@@ -3,8 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSuggestions } from '../../contexts/SuggestionsContext'
-import { RefreshCw, Maximize2, Settings, Plus } from 'lucide-react'
-import { Filter } from 'lucide-react'
+import { RefreshCw, Maximize2, Settings, Plus, Filter } from 'lucide-react'
 import { getStatusColor, SuggestionStatus } from '../../data/suggestions'
 import { hasAdminAccess } from '../../utils/auth'
 import SuggestionsTable from './SuggestionsTable'
@@ -12,7 +11,6 @@ import SuggestionsBulkActionsBar from './SuggestionsBulkActionsBar'
 import BulkMergeSuggestionsDialog from './BulkMergeSuggestionsDialog'
 import SuggestionsSettingsModal from './SuggestionsSettingsModal'
 import CreateSuggestionModal from './CreateSuggestionModal'
-import { getStatusColor as getStatusColorUtil } from '../../data/suggestions'
 
 export default function SuggestionsListTable() {
   const router = useRouter()
@@ -47,6 +45,8 @@ export default function SuggestionsListTable() {
 
   // Закрытие dropdown при клике вне его
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    
     const handleClickOutside = (event: MouseEvent) => {
       if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
         setFilterMenuOpen(false)
@@ -148,10 +148,10 @@ export default function SuggestionsListTable() {
           {filterMenuOpen && (
             <div className="absolute left-0 top-full mt-1 w-[290px] bg-white border border-gray-200 rounded-lg z-50" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
               <div className="py-1">
-                {statusOptions.map((status) => {
-                  const statusColor = getStatusColorUtil(status)
-                  const isActive = activeStatus === status
-                  const count = getStatusCount(status)
+              {statusOptions.map((status) => {
+                const statusColor = getStatusColor(status)
+                const isActive = activeStatus === status
+                const count = getStatusCount(status)
                   return (
                     <button
                       key={status}
