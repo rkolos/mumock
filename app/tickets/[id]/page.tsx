@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation'
 import Sidebar from '../../../components/admin/Sidebar'
 import TicketView from '../../../components/admin/TicketView'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 
 export default function TicketPage() {
   const params = useParams()
@@ -13,7 +13,9 @@ export default function TicketPage() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+      <Suspense fallback={<div className="fixed lg:static inset-y-0 left-0 z-50 w-[260px] bg-[#1e293b]" />}>
+        <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+      </Suspense>
       <div className="flex-1 flex flex-col overflow-hidden">
         <TicketView ticketId={id} />
       </div>
