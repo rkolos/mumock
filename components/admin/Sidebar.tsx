@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import {
   Ticket,
   UserCog,
@@ -16,13 +16,15 @@ import {
   X,
   User,
   ChevronDown,
+  ChevronRight,
   Brain,
   Zap,
   Lightbulb,
+  Bug,
 } from 'lucide-react'
 import { useWidget } from '../../contexts/WidgetContext'
 import { useEffect, useState, useRef } from 'react'
-import { mockSuggestions } from '../../data/suggestions'
+import { mockSuggestions, SuggestionStatus, getStatusColor } from '../../data/suggestions'
 import { mockTickets } from '../../data/tickets'
 
 interface SidebarProps {
@@ -33,14 +35,86 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const { setCurrentSection } = useWidget()
   const [organizationDropdownOpen, setOrganizationDropdownOpen] = useState(false)
+  
+  // Состояние раскрытия меню Suggestions (загружается из localStorage)
+  const [suggestionsExpanded, setSuggestionsExpanded] = useState(false)
   
   // Подсчет предложений в статусе New
   const newSuggestionsCount = mockSuggestions.filter(s => s.lifecycle.status === 'New').length
   
   // Подсчет тикетов в статусе open (аналог New)
   const newTicketsCount = mockTickets.filter(t => t.status === 'open').length
+
+  // Загрузка состояния раскрытия из localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebar-suggestions-expanded')
+      if (saved === 'true') {
+        setSuggestionsExpanded(true)
+      }
+    }
+  }, [])
+
+  // Сохранение состояния раскрытия в localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sidebar-suggestions-expanded', String(suggestionsExpanded))
+    }
+  }, [suggestionsExpanded])
+
+  // Получение активного статуса из URL
+  const activeStatusFromUrl = searchParams.get('status')
+  
+  // Маппинг URL параметров в статусы
+  const statusUrlMap: Record<string, SuggestionStatus> = {
+    'new': 'New',
+    'open': 'Open',
+    'planned': 'Planned',
+    'in-progress': 'In Progress',
+    'completed': 'Completed',
+    'rejected': 'Rejected',
+  }
+  
+  const activeStatus: SuggestionStatus | null = activeStatusFromUrl 
+    ? (statusUrlMap[activeStatusFromUrl] || null)
+    : null
+
+  // Список статусов для подменю
+  const statusOptions: { status: SuggestionStatus; label: string; urlParam: string }[] = [
+    { status: 'New', label: 'New', urlParam: 'new' },
+    { status: 'Open', label: 'Open', urlParam: 'open' },
+    { status: 'Planned', label: 'Planned', urlParam: 'planned' },
+    { status: 'In Progress', label: 'In Progress', urlParam: 'in-progress' },
+    { status: 'Completed', label: 'Completed', urlParam: 'completed' },
+    { status: 'Rejected', label: 'Rejected', urlParam: 'rejected' },
+  ]
+
+  // Обработчик клика по статусу в подменю
+  const handleStatusClick = (urlParam: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    router.push(`/suggestions?status=${urlParam}`)
+    handleLinkClick(e)
+  }
+
+  // Обработчик клика по родительскому пункту Suggestions
+  const handleSuggestionsMainClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    router.push('/suggestions')
+    handleLinkClick(e)
+  }
+
+  // Обработчик клика по стрелке (только раскрытие/сворачивание)
+  const handleToggleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setSuggestionsExpanded(!suggestionsExpanded)
+  }
 
   // Обновляем текущий раздел при изменении pathname
   useEffect(() => {
@@ -49,6 +123,7 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       '/statuses': 'statuses',
       '/tags': 'tags',
       '/suggestions': 'suggestions',
+      '/bugs': 'bugs',
       '/categories': 'categories',
       '/knowledge-base': 'knowledge-base',
       '/panels': 'panels',
@@ -92,11 +167,12 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
   const navItems = {
     main: [
       { name: 'Tickets', href: '/', icon: UserCog },
-      { name: 'Statuses', href: '/statuses', icon: ListChecks },
-      { name: 'Tags', href: '/tags', icon: Tag },
       { name: 'Suggestions', href: '/suggestions', icon: Lightbulb },
+      { name: 'Bugs', href: '/bugs', icon: Bug },
     ],
     system: [
+      { name: 'Statuses', href: '/statuses', icon: ListChecks },
+      { name: 'Tags', href: '/tags', icon: Tag },
       { name: 'Panels', href: '/panels', icon: ShieldCheck },
       { name: 'Members', href: '/members', icon: Users },
       { name: 'Roles', href: '/roles', icon: UserCheck },
@@ -188,12 +264,102 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
             </p>
             <div className="space-y-1">
               {navItems.main.map((item) => {
+                // Специальная обработка для Suggestions - раскрывающееся меню
+                if (item.href === '/suggestions') {
+                  const Icon = item.icon
+                  const isSuggestionsPage = pathname === '/suggestions' || pathname.startsWith('/suggestions/')
+                  const isParentActive = isSuggestionsPage && !activeStatus
+                  const showSuggestionsCount = newSuggestionsCount > 0
+                  
+                  return (
+                    <div key={item.href} className="space-y-1">
+                      {/* Родительский элемент Suggestions */}
+                      <div className={`
+                        flex items-center rounded-md
+                        transition-colors
+                        ${
+                          isParentActive
+                            ? 'bg-blue-600 text-white'
+                            : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                        }
+                      `}>
+                        {/* Main Area (клик - переход на /suggestions) */}
+                        <button
+                          onClick={handleSuggestionsMainClick}
+                          className={`
+                            flex items-center gap-3 px-3 py-2 rounded-md flex-1
+                            transition-colors text-left
+                          `}
+                        >
+                          <Icon className="h-5 w-5" />
+                          <span className="flex-1">{item.name}</span>
+                          {showSuggestionsCount && (
+                            <span className={`
+                              px-2 py-0.5 text-xs font-semibold rounded-full
+                              ${
+                                isParentActive
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-slate-600 text-white'
+                              }
+                            `}>
+                              {newSuggestionsCount}
+                            </span>
+                          )}
+                        </button>
+                        
+                        {/* Toggle Area (клик - только раскрытие/сворачивание) */}
+                        <button
+                          onClick={handleToggleClick}
+                          className="flex items-center justify-center p-2 rounded-md hover:bg-slate-700 transition-colors min-w-[24px] min-h-[24px]"
+                          aria-label={suggestionsExpanded ? 'Свернуть меню' : 'Развернуть меню'}
+                        >
+                          {suggestionsExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Подменю статусов */}
+                      {suggestionsExpanded && (
+                        <div className="ml-4 space-y-1">
+                          {statusOptions.map((statusOption) => {
+                            const statusColor = getStatusColor(statusOption.status)
+                            const isStatusActive = activeStatus === statusOption.status
+                            
+                            return (
+                              <button
+                                key={statusOption.status}
+                                onClick={(e) => handleStatusClick(statusOption.urlParam, e)}
+                                className={`
+                                  w-full flex items-center gap-2 px-3 py-2 rounded-md
+                                  transition-colors text-left
+                                  ${
+                                    isStatusActive
+                                      ? 'bg-blue-600 text-white'
+                                      : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                                  }
+                                `}
+                              >
+                                {/* Цветная точка */}
+                                <div className={`w-2 h-2 rounded-full ${statusColor} flex-shrink-0`} />
+                                <span className="text-sm">{statusOption.label}</span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+                
+                // Обычная обработка для остальных пунктов
                 const Icon = item.icon
                 const isActive = pathname === item.href
-                const showSuggestionsCount = item.href === '/suggestions' && newSuggestionsCount > 0
                 const showTicketsCount = item.href === '/' && newTicketsCount > 0
-                const count = item.href === '/suggestions' ? newSuggestionsCount : item.href === '/' ? newTicketsCount : 0
-                const showCount = showSuggestionsCount || showTicketsCount
+                const count = item.href === '/' ? newTicketsCount : 0
+                const showCount = showTicketsCount
                 return (
                   <Link
                     key={item.href}

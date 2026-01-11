@@ -1,5 +1,11 @@
 export type SuggestionStatus = 'New' | 'Open' | 'Duplicate' | 'Planned' | 'In Progress' | 'Completed' | 'Rejected'
 
+export interface SuggestionCluster {
+  master: Suggestion
+  children: Suggestion[]
+  totalDuplicates: number
+}
+
 export interface Suggestion {
   id: string
   source: 'discord' | 'web'
@@ -442,6 +448,248 @@ export const mockSuggestions: Suggestion[] = [
     },
     created_at: '2024-01-22T14:30:00Z',
   },
+  {
+    id: 'sug_9005',
+    source: 'web',
+    author: {
+      username: 'mike_s',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike',
+    },
+    content: {
+      title: 'Please add dark mode',
+      description: 'Dark mode would be great for the admin panel. Many users work at night.',
+      category: 'UI',
+    },
+    metrics: {
+      score: 5,
+      upvotes: 7,
+      downvotes: 2,
+    },
+    lifecycle: {
+      status: 'New',
+    },
+    created_at: '2024-02-15T10:00:00Z',
+  },
+  {
+    id: 'sug_9112',
+    source: 'discord',
+    author: {
+      username: 'sarah_j',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah',
+    },
+    content: {
+      title: 'Black background request',
+      description: 'Can we have a dark/black theme option? My eyes get tired with the bright white background.',
+      category: 'UI',
+    },
+    metrics: {
+      score: 2,
+      upvotes: 4,
+      downvotes: 2,
+    },
+    lifecycle: {
+      status: 'New',
+    },
+    created_at: '2024-02-20T14:30:00Z',
+  },
+  {
+    id: 'sug_9200',
+    source: 'web',
+    author: {
+      username: 'alex_petrov',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex',
+    },
+    content: {
+      title: 'Улучшить систему поиска в админке',
+      description: 'Поиск работает плохо, нужно добавить фильтры и улучшить алгоритм',
+      category: 'UI',
+    },
+    metrics: {
+      score: 8,
+      upvotes: 10,
+      downvotes: 2,
+    },
+    lifecycle: {
+      status: 'New',
+    },
+    created_at: '2024-02-10T09:00:00Z',
+  },
+  {
+    id: 'sug_9201',
+    source: 'discord',
+    author: {
+      username: 'maria_ivanova',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=maria',
+    },
+    content: {
+      title: 'Better search functionality needed',
+      description: 'The search feature needs improvement - better filters and faster results',
+      category: 'UI',
+    },
+    metrics: {
+      score: 6,
+      upvotes: 8,
+      downvotes: 2,
+    },
+    lifecycle: {
+      status: 'New',
+    },
+    created_at: '2024-02-12T14:20:00Z',
+  },
+  {
+    id: 'sug_9202',
+    source: 'web',
+    author: {
+      username: 'peter_wilson',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=peter',
+    },
+    content: {
+      title: 'Оптимизировать API endpoints',
+      description: 'Некоторые API запросы выполняются слишком долго, нужно оптимизировать',
+      category: 'Backend',
+    },
+    metrics: {
+      score: 12,
+      upvotes: 15,
+      downvotes: 3,
+    },
+    lifecycle: {
+      status: 'New',
+    },
+    created_at: '2024-02-05T11:15:00Z',
+  },
+  {
+    id: 'sug_9203',
+    source: 'discord',
+    author: {
+      username: 'anna_kim',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=anna',
+    },
+    content: {
+      title: 'API performance issues',
+      description: 'API responses are slow, especially for large datasets. Need optimization',
+      category: 'Backend',
+    },
+    metrics: {
+      score: 9,
+      upvotes: 12,
+      downvotes: 3,
+    },
+    lifecycle: {
+      status: 'New',
+    },
+    created_at: '2024-02-08T16:30:00Z',
+  },
+  {
+    id: 'sug_9204',
+    source: 'web',
+    author: {
+      username: 'dmitry_sokolov',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dmitry',
+    },
+    content: {
+      title: 'Улучшить мобильный интерфейс',
+      description: 'Мобильная версия нуждается в доработке, особенно формы и навигация',
+      category: 'UI',
+    },
+    metrics: {
+      score: 15,
+      upvotes: 18,
+      downvotes: 3,
+    },
+    lifecycle: {
+      status: 'New',
+    },
+    created_at: '2024-02-01T10:00:00Z',
+  },
+  {
+    id: 'sug_9205',
+    source: 'discord',
+    author: {
+      username: 'lisa_brown',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lisa',
+    },
+    content: {
+      title: 'Mobile UI improvements',
+      description: 'The mobile version needs better forms and navigation',
+      category: 'UI',
+    },
+    metrics: {
+      score: 11,
+      upvotes: 14,
+      downvotes: 3,
+    },
+    lifecycle: {
+      status: 'New',
+    },
+    created_at: '2024-02-03T13:45:00Z',
+  },
+  {
+    id: 'sug_9206',
+    source: 'web',
+    author: {
+      username: 'ivan_kuznetsov',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ivan',
+    },
+    content: {
+      title: 'Добавить двухфакторную аутентификацию 2FA',
+      description: 'Для безопасности нужно добавить 2FA для всех пользователей',
+      category: 'Security',
+    },
+    metrics: {
+      score: 18,
+      upvotes: 21,
+      downvotes: 3,
+    },
+    lifecycle: {
+      status: 'New',
+    },
+    created_at: '2024-02-06T08:20:00Z',
+  },
+  {
+    id: 'sug_9207',
+    source: 'discord',
+    author: {
+      username: 'sophie_martin',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sophie',
+    },
+    content: {
+      title: 'Two-factor authentication required',
+      description: 'We need 2FA to improve security for all users',
+      category: 'Security',
+    },
+    metrics: {
+      score: 14,
+      upvotes: 17,
+      downvotes: 3,
+    },
+    lifecycle: {
+      status: 'New',
+    },
+    created_at: '2024-02-09T15:10:00Z',
+  },
+  {
+    id: 'sug_9208',
+    source: 'web',
+    author: {
+      username: 'max_taylor',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=max',
+    },
+    content: {
+      title: 'Enable 2FA authentication',
+      description: 'Two-factor authentication should be available for better account security',
+      category: 'Security',
+    },
+    metrics: {
+      score: 10,
+      upvotes: 13,
+      downvotes: 3,
+    },
+    lifecycle: {
+      status: 'New',
+    },
+    created_at: '2024-02-11T12:00:00Z',
+  },
 ]
 
 // Утилита для форматирования относительного времени
@@ -499,5 +747,117 @@ export function getDiscordStatusColor(status: SuggestionStatus): string {
     'Rejected': '#e74c3c',
   }
   return colorMap[status] || '#95a5a6'
+}
+
+// Функция для создания мок-кластеров для демонстрации группировки
+export function createMockClusters(suggestions: Suggestion[]): (SuggestionCluster | Suggestion)[] {
+  // Определяем группы по ключевым словам и категориям
+  const clusters: SuggestionCluster[] = []
+  const usedIds = new Set<string>()
+  
+  // Группа 1: Темная тема (Dark Mode)
+  const darkModeGroup: Suggestion[] = []
+  const darkModeKeywords = ['темн', 'dark mode', 'dark theme', 'black background', 'темная тема', 'черный фон']
+  
+  // Группа 2: Улучшение поиска
+  const searchGroup: Suggestion[] = []
+  const searchKeywords = ['поиск', 'search', 'фильтр', 'filter', 'искать', 'find']
+  
+  // Группа 3: Производительность API
+  const apiPerformanceGroup: Suggestion[] = []
+  const apiPerformanceKeywords = ['api', 'производительность', 'performance', 'оптимизац', 'optimiz', 'медленн', 'slow']
+  
+  // Группа 4: Мобильная версия
+  const mobileGroup: Suggestion[] = []
+  const mobileKeywords = ['мобильн', 'mobile', 'смартфон', 'smartphone', 'планшет', 'tablet']
+  
+  // Группа 5: Двухфакторная аутентификация
+  const twoFactorGroup: Suggestion[] = []
+  const twoFactorKeywords = ['2fa', 'two-factor', 'two factor', 'двухфактор', 'аутентификац', 'authentication']
+  
+  suggestions.forEach(s => {
+    if (s.lifecycle.status === 'Duplicate') return // Пропускаем уже помеченные дубликаты
+    
+    const titleLower = s.content.title.toLowerCase()
+    const descriptionLower = s.content.description.toLowerCase()
+    
+    // Проверяем группу темной темы
+    if (s.content.category === 'UI' && darkModeKeywords.some(kw => titleLower.includes(kw) || descriptionLower.includes(kw))) {
+      darkModeGroup.push(s)
+      return
+    }
+    
+    // Проверяем группу поиска
+    if (s.content.category === 'UI' && searchKeywords.some(kw => titleLower.includes(kw) || descriptionLower.includes(kw))) {
+      searchGroup.push(s)
+      return
+    }
+    
+    // Проверяем группу производительности API
+    if (s.content.category === 'Backend' && apiPerformanceKeywords.some(kw => titleLower.includes(kw) || descriptionLower.includes(kw))) {
+      apiPerformanceGroup.push(s)
+      return
+    }
+    
+    // Проверяем группу мобильной версии
+    if (s.content.category === 'UI' && mobileKeywords.some(kw => titleLower.includes(kw) || descriptionLower.includes(kw))) {
+      mobileGroup.push(s)
+      return
+    }
+    
+    // Проверяем группу 2FA
+    if (s.content.category === 'Security' && twoFactorKeywords.some(kw => titleLower.includes(kw) || descriptionLower.includes(kw))) {
+      twoFactorGroup.push(s)
+      return
+    }
+  })
+  
+  // Функция для создания кластера из группы
+  const createCluster = (group: Suggestion[]): SuggestionCluster | null => {
+    if (group.length > 1) {
+      // Сортируем по дате создания (самый старый = мастер)
+      group.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      const master = group[0]
+      const children = group.slice(1)
+      
+      // Помечаем все ID как использованные
+      group.forEach(s => usedIds.add(s.id))
+      
+      return {
+        master,
+        children,
+        totalDuplicates: children.length,
+      }
+    }
+    return null
+  }
+  
+  // Создаем кластеры
+  const darkModeCluster = createCluster(darkModeGroup)
+  if (darkModeCluster) clusters.push(darkModeCluster)
+  
+  const searchCluster = createCluster(searchGroup)
+  if (searchCluster) clusters.push(searchCluster)
+  
+  const apiPerformanceCluster = createCluster(apiPerformanceGroup)
+  if (apiPerformanceCluster) clusters.push(apiPerformanceCluster)
+  
+  const mobileCluster = createCluster(mobileGroup)
+  if (mobileCluster) clusters.push(mobileCluster)
+  
+  const twoFactorCluster = createCluster(twoFactorGroup)
+  if (twoFactorCluster) clusters.push(twoFactorCluster)
+  
+  // Формируем результат: сначала кластеры, затем одиночные предложения
+  const result: (SuggestionCluster | Suggestion)[] = [...clusters]
+  
+  // Добавляем остальные предложения как одиночки
+  suggestions.forEach(s => {
+    if (!usedIds.has(s.id) && s.lifecycle.status !== 'Duplicate') {
+      result.push(s)
+    }
+  })
+  
+  return result
 }
 
