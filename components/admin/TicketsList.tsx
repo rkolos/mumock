@@ -7,6 +7,7 @@ import { mockTickets, Ticket } from '../../data/tickets'
 import { useWidget } from '../../contexts/WidgetContext'
 import TicketsFilterChips from './TicketsFilterChips'
 import TicketsFilterDropdown from './TicketsFilterDropdown'
+import QuickTimeFilters from './QuickTimeFilters'
 
 export default function TicketsList() {
   const router = useRouter()
@@ -22,6 +23,7 @@ export default function TicketsList() {
   const [tagsFilters, setTagsFilters] = useState<string[]>([])
   const [categoriesFilters, setCategoriesFilters] = useState<string[]>([])
   const [dateFilter, setDateFilter] = useState<{ from: string; to: string } | null>(null)
+  const [waitingTimeFilter, setWaitingTimeFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [filterMenuOpen, setFilterMenuOpen] = useState(false)
   const filterMenuRef = useRef<HTMLDivElement>(null)
@@ -40,6 +42,19 @@ export default function TicketsList() {
       setAllTickets(mockTickets)
     }
   }, [widgetTickets])
+
+  // Функция подсчета тикетов для каждого фильтра времени ожидания
+  const getWaitingTimeCounts = () => {
+    const openTickets = allTickets.filter(t => t.status !== 'closed')
+    
+    return {
+      all: openTickets.length,
+      '1h': openTickets.filter(t => t.waitTimeHours !== undefined && t.waitTimeHours >= 1).length,
+      '6h': openTickets.filter(t => t.waitTimeHours !== undefined && t.waitTimeHours >= 6).length,
+      '12h': openTickets.filter(t => t.waitTimeHours !== undefined && t.waitTimeHours >= 12).length,
+      '24h': openTickets.filter(t => t.waitTimeHours !== undefined && t.waitTimeHours >= 24).length,
+    }
+  }
 
   // Функция фильтрации тикетов
   const getFilteredTickets = (): Ticket[] => {
@@ -100,6 +115,30 @@ export default function TicketsList() {
       )
     }
     
+    // Waiting Time filter (только для не закрытых тикетов)
+    if (waitingTimeFilter && waitingTimeFilter !== 'all') {
+      const thresholdMap: Record<string, number> = {
+        '1h': 1,
+        '6h': 6,
+        '12h': 12,
+        '24h': 24,
+      }
+      const threshold = thresholdMap[waitingTimeFilter]
+      if (threshold !== undefined) {
+        filtered = filtered.filter(t => {
+          // Фильтруем только открытые тикеты
+          if (t.status === 'closed') {
+            return false
+          }
+          // Проверяем waitTimeHours
+          if (t.waitTimeHours !== undefined) {
+            return t.waitTimeHours >= threshold
+          }
+          return false
+        })
+      }
+    }
+    
     return filtered
   }
 
@@ -115,6 +154,7 @@ export default function TicketsList() {
     const categoriesParam = searchParams.get('categories')
     const dateFromParam = searchParams.get('dateFrom')
     const dateToParam = searchParams.get('dateTo')
+    const waitingTimeParam = searchParams.get('waiting_time_gte')
     
     isSyncingFromUrl.current = true
     
@@ -200,6 +240,18 @@ export default function TicketsList() {
       }
     }
     
+    // Waiting Time
+    if (waitingTimeParam) {
+      const validValues = ['all', '1h', '6h', '12h', '24h']
+      if (validValues.includes(waitingTimeParam) && waitingTimeFilter !== waitingTimeParam) {
+        setWaitingTimeFilter(waitingTimeParam)
+      }
+    } else {
+      if (waitingTimeFilter !== 'all') {
+        setWaitingTimeFilter('all')
+      }
+    }
+    
     // Сбрасываем флаг после небольшой задержки
     setTimeout(() => {
       isSyncingFromUrl.current = false
@@ -271,8 +323,15 @@ export default function TicketsList() {
       newUrl.searchParams.delete('dateTo')
     }
     
+    // Waiting Time
+    if (waitingTimeFilter && waitingTimeFilter !== 'all') {
+      newUrl.searchParams.set('waiting_time_gte', waitingTimeFilter)
+    } else {
+      newUrl.searchParams.delete('waiting_time_gte')
+    }
+    
     router.replace(newUrl.pathname + newUrl.search, { scroll: false })
-  }, [sourceFilter, statusFilters, priorityFilters, assignedUsersFilters, tagsFilters, categoriesFilters, dateFilter, router])
+  }, [sourceFilter, statusFilters, priorityFilters, assignedUsersFilters, tagsFilters, categoriesFilters, dateFilter, waitingTimeFilter, router])
 
   // Обработчики удаления фильтров
   const handleRemoveSource = () => {
@@ -490,22 +549,42 @@ export default function TicketsList() {
 
         {/* Filter buttons */}
         <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2 flex-wrap relative" ref={filterMenuRef}>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                setFilterMenuOpen(!filterMenuOpen)
-              }}
-              className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200 transition-colors flex items-center gap-1.5"
-            >
-              <Filter className="h-3.5 w-3.5" />
-              <span>Add Filter</span>
-            </button>
-            
-            {/* Filter Dropdown */}
-            <TicketsFilterDropdown
-              isOpen={filterMenuOpen}
-              onClose={() => setFilterMenuOpen(false)}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 relative" ref={filterMenuRef}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setFilterMenuOpen(!filterMenuOpen)
+                }}
+                className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200 transition-colors flex items-center gap-1.5"
+              >
+                <Filter className="h-3.5 w-3.5" />
+                <span>Add Filter</span>
+              </button>
+              
+              {/* Filter Dropdown */}
+              <TicketsFilterDropdown
+                isOpen={filterMenuOpen}
+                onClose={() => setFilterMenuOpen(false)}
+                sourceFilter={sourceFilter}
+                statusFilters={statusFilters}
+                priorityFilters={priorityFilters}
+                assignedUsersFilters={assignedUsersFilters}
+                tagsFilters={tagsFilters}
+                categoriesFilters={categoriesFilters}
+                dateFilter={dateFilter}
+                onSourceChange={setSourceFilter}
+                onStatusChange={setStatusFilters}
+                onPriorityChange={setPriorityFilters}
+                onAssignedUsersChange={setAssignedUsersFilters}
+                onTagsChange={setTagsFilters}
+                onCategoriesChange={setCategoriesFilters}
+                onDateChange={setDateFilter}
+              />
+            </div>
+
+            {/* Active Filters Chips */}
+            <TicketsFilterChips
               sourceFilter={sourceFilter}
               statusFilters={statusFilters}
               priorityFilters={priorityFilters}
@@ -513,34 +592,25 @@ export default function TicketsList() {
               tagsFilters={tagsFilters}
               categoriesFilters={categoriesFilters}
               dateFilter={dateFilter}
-              onSourceChange={setSourceFilter}
-              onStatusChange={setStatusFilters}
-              onPriorityChange={setPriorityFilters}
-              onAssignedUsersChange={setAssignedUsersFilters}
-              onTagsChange={setTagsFilters}
-              onCategoriesChange={setCategoriesFilters}
-              onDateChange={setDateFilter}
+              onRemoveSource={handleRemoveSource}
+              onRemoveStatus={handleRemoveStatus}
+              onRemovePriority={handleRemovePriority}
+              onRemoveAssignedUsers={handleRemoveAssignedUsers}
+              onRemoveTags={handleRemoveTags}
+              onRemoveCategories={handleRemoveCategories}
+              onRemoveDate={handleRemoveDate}
+              onClearAll={handleClearAll}
             />
+            
+            {/* Quick Time Filters */}
+            <div className="ml-auto">
+              <QuickTimeFilters
+                value={waitingTimeFilter}
+                onChange={setWaitingTimeFilter}
+                counts={getWaitingTimeCounts()}
+              />
+            </div>
           </div>
-
-          {/* Active Filters Chips */}
-          <TicketsFilterChips
-            sourceFilter={sourceFilter}
-            statusFilters={statusFilters}
-            priorityFilters={priorityFilters}
-            assignedUsersFilters={assignedUsersFilters}
-            tagsFilters={tagsFilters}
-            categoriesFilters={categoriesFilters}
-            dateFilter={dateFilter}
-            onRemoveSource={handleRemoveSource}
-            onRemoveStatus={handleRemoveStatus}
-            onRemovePriority={handleRemovePriority}
-            onRemoveAssignedUsers={handleRemoveAssignedUsers}
-            onRemoveTags={handleRemoveTags}
-            onRemoveCategories={handleRemoveCategories}
-            onRemoveDate={handleRemoveDate}
-            onClearAll={handleClearAll}
-          />
         </div>
       </div>
 
