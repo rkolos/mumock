@@ -40,6 +40,7 @@ interface SuggestionsContextType {
   bulkUpdateStatus: (ids: string[], status: SuggestionStatus) => void
   bulkMergeSuggestions: (sourceIds: string[], targetId: string) => void
   getFilteredSuggestions: () => Suggestion[]
+  getGroupedSuggestions: () => (SuggestionCluster | Suggestion)[]
   getSimilarSuggestions: (suggestionId: string) => Suggestion[]
   dismissSimilarSuggestions: (suggestionId: string) => void
   // Методы для работы с настройками
@@ -47,6 +48,9 @@ interface SuggestionsContextType {
   saveSettings: (config: SuggestionsConfig) => Promise<void>
   getCategories: () => SuggestionCategory[]
   getNotificationTemplate: (event: 'ticket_created' | 'ticket_approved' | 'ticket_rejected') => string
+  // AI Grouping
+  isAIGroupingEnabled: boolean
+  setIsAIGroupingEnabled: (enabled: boolean) => void
 }
 
 const SuggestionsContext = createContext<SuggestionsContextType | undefined>(undefined)

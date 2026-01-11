@@ -16,10 +16,10 @@ export default function SuggestionsCardList({
   selectedSuggestionId 
 }: SuggestionsCardListProps) {
   const {
-    activeStatus,
+    statusFilters,
     searchQuery,
     suggestions,
-    setActiveStatus,
+    setStatusFilters,
     setSearchQuery,
     getFilteredSuggestions,
     getCategories,
@@ -100,17 +100,17 @@ export default function SuggestionsCardList({
             style={{ letterSpacing: '0.5px' }}
           >
             <Filter className="h-3.5 w-3.5" />
-            {activeStatus !== 'All' ? (
-              <span className="text-[#424242]">{activeStatus}</span>
+            {statusFilters.length > 0 ? (
+              <span className="text-[#424242]">{statusFilters.join(', ')}</span>
             ) : (
               <span className="text-[#757575]">Add Filter</span>
             )}
           </button>
-          {activeStatus !== 'All' && (
+          {statusFilters.length > 0 && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                setActiveStatus('All')
+                setStatusFilters([])
               }}
               className="p-0.5 hover:bg-gray-100 rounded transition-colors"
               title="Clear filter"
@@ -136,13 +136,13 @@ export default function SuggestionsCardList({
             <div className="py-1">
               {statusOptions.map((status) => {
                 const statusColor = getStatusColor(status)
-                const isActive = activeStatus === status
+                const isActive = statusFilters.includes(status)
                 const count = getStatusCount(status)
                 return (
                   <button
                     key={status}
                     onClick={() => {
-                      setActiveStatus(status)
+                      setStatusFilters([status])
                       setFilterMenuOpen(false)
                     }}
                     className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 text-sm text-gray-900 hover:bg-gray-50 transition-colors ${
