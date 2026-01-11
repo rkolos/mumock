@@ -14,7 +14,7 @@ export interface Ticket {
   errorLogs?: string
   // AI and source fields
   aiTitle?: string
-  source?: 'discord' | 'telegram' | 'whatsapp' | 'web'
+  source?: 'discord' | 'telegram' | 'whatsapp' | 'web' | 'email' | 'api'
   waitTimeHours?: number
   // Notification fields
   unread_messages_count?: number

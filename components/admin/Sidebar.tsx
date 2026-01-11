@@ -21,6 +21,11 @@ import {
   Zap,
   Lightbulb,
   Bug,
+  Globe,
+  Mail,
+  MessageCircle,
+  Send,
+  Code,
 } from 'lucide-react'
 import { useWidget } from '../../contexts/WidgetContext'
 import { useEffect, useState, useRef } from 'react'
@@ -43,6 +48,9 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
   // Состояние раскрытия меню Suggestions (загружается из localStorage)
   const [suggestionsExpanded, setSuggestionsExpanded] = useState(false)
   
+  // Состояние раскрытия меню Tickets (загружается из localStorage)
+  const [ticketsExpanded, setTicketsExpanded] = useState(false)
+  
   // Подсчет предложений в статусе New
   const newSuggestionsCount = mockSuggestions.filter(s => s.lifecycle.status === 'New').length
   
@@ -52,9 +60,13 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
   // Загрузка состояния раскрытия из localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebar-suggestions-expanded')
-      if (saved === 'true') {
+      const savedSuggestions = localStorage.getItem('sidebar-suggestions-expanded')
+      if (savedSuggestions === 'true') {
         setSuggestionsExpanded(true)
+      }
+      const savedTickets = localStorage.getItem('sidebar_tickets_expanded')
+      if (savedTickets === 'true') {
+        setTicketsExpanded(true)
       }
     }
   }, [])
@@ -65,6 +77,13 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       localStorage.setItem('sidebar-suggestions-expanded', String(suggestionsExpanded))
     }
   }, [suggestionsExpanded])
+
+  // Сохранение состояния раскрытия Tickets в localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sidebar_tickets_expanded', String(ticketsExpanded))
+    }
+  }, [ticketsExpanded])
 
   // Получение активного статуса из URL
   const activeStatusFromUrl = searchParams.get('status')
@@ -114,6 +133,41 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
     e.preventDefault()
     e.stopPropagation()
     setSuggestionsExpanded(!suggestionsExpanded)
+  }
+
+  // Получение активного источника из URL
+  const activeSourceFromUrl = searchParams.get('source')
+  
+  // Список источников для подменю Tickets
+  const sourceOptions: { source: string; label: string; urlParam: string; icon: React.ComponentType<{ className?: string }>; iconColor: string }[] = [
+    { source: 'web', label: 'Web', urlParam: 'web', icon: Globe, iconColor: 'text-blue-500' },
+    { source: 'email', label: 'Email', urlParam: 'email', icon: Mail, iconColor: 'text-orange-400' },
+    { source: 'discord', label: 'Discord', urlParam: 'discord', icon: MessageCircle, iconColor: 'text-[#5865F2]' },
+    { source: 'telegram', label: 'Telegram', urlParam: 'telegram', icon: Send, iconColor: 'text-sky-400' },
+    { source: 'api', label: 'API', urlParam: 'api', icon: Code, iconColor: 'text-gray-500' },
+  ]
+
+  // Обработчик клика по источнику в подменю Tickets
+  const handleSourceClick = (urlParam: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    router.push(`/?source=${urlParam}`)
+    handleLinkClick(e)
+  }
+
+  // Обработчик клика по родительскому пункту Tickets
+  const handleTicketsMainClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    router.push('/')
+    handleLinkClick(e)
+  }
+
+  // Обработчик клика по стрелке Tickets (только раскрытие/сворачивание)
+  const handleTicketsToggleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setTicketsExpanded(!ticketsExpanded)
   }
 
   // Обновляем текущий раздел при изменении pathname
@@ -264,6 +318,100 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
             </p>
             <div className="space-y-1">
               {navItems.main.map((item) => {
+                // Специальная обработка для Tickets - раскрывающееся меню
+                if (item.href === '/') {
+                  const Icon = item.icon
+                  const isTicketsPage = pathname === '/' || pathname.startsWith('/tickets/')
+                  const isParentActive = isTicketsPage && !activeSourceFromUrl
+                  const showTicketsCount = newTicketsCount > 0
+                  
+                  return (
+                    <div key={item.href} className="space-y-1">
+                      {/* Родительский элемент Tickets */}
+                      <div className={`
+                        flex items-center rounded-md
+                        transition-colors
+                        ${
+                          isParentActive
+                            ? 'bg-blue-600 text-white'
+                            : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                        }
+                      `}>
+                        {/* Main Area (клик - переход на /) */}
+                        <button
+                          onClick={handleTicketsMainClick}
+                          className={`
+                            flex items-center gap-3 px-3 py-2 rounded-md flex-1
+                            transition-colors text-left
+                          `}
+                        >
+                          <Icon className="h-5 w-5" />
+                          <span className="flex-1">{item.name}</span>
+                          {showTicketsCount && (
+                            <span className={`
+                              px-2 py-0.5 text-xs font-semibold rounded-full
+                              ${
+                                isParentActive
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-slate-600 text-white'
+                              }
+                            `}>
+                              {newTicketsCount}
+                            </span>
+                          )}
+                        </button>
+                        
+                        {/* Toggle Area (клик - только раскрытие/сворачивание) */}
+                        <button
+                          onClick={handleTicketsToggleClick}
+                          className="flex items-center justify-center p-2 rounded-md hover:bg-slate-700 transition-colors min-w-[24px] min-h-[24px]"
+                          aria-label={ticketsExpanded ? 'Свернуть меню' : 'Развернуть меню'}
+                        >
+                          {ticketsExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Подменю источников */}
+                      {ticketsExpanded && (
+                        <div className="ml-4 space-y-1">
+                          {sourceOptions.map((sourceOption) => {
+                            const isSourceActive = activeSourceFromUrl === sourceOption.urlParam
+                            const IconComponent = sourceOption.icon
+                            
+                            return (
+                              <button
+                                key={sourceOption.source}
+                                onClick={(e) => handleSourceClick(sourceOption.urlParam, e)}
+                                className={`
+                                  w-full flex items-center gap-2 px-3 py-2 rounded-md
+                                  transition-colors text-left
+                                  ${
+                                    isSourceActive
+                                      ? 'bg-blue-600 text-white'
+                                      : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                                  }
+                                `}
+                              >
+                                {/* Иконка источника */}
+                                <IconComponent className={`h-4 w-4 flex-shrink-0 ${
+                                  isSourceActive
+                                    ? 'text-white'
+                                    : sourceOption.iconColor
+                                }`} />
+                                <span className="text-sm">{sourceOption.label}</span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+                
                 // Специальная обработка для Suggestions - раскрывающееся меню
                 if (item.href === '/suggestions') {
                   const Icon = item.icon
@@ -356,10 +504,7 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
                 
                 // Обычная обработка для остальных пунктов
                 const Icon = item.icon
-                const isActive = pathname === item.href
-                const showTicketsCount = item.href === '/' && newTicketsCount > 0
-                const count = item.href === '/' ? newTicketsCount : 0
-                const showCount = showTicketsCount
+                const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/'))
                 return (
                   <Link
                     key={item.href}
@@ -377,18 +522,6 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
                   >
                     <Icon className="h-5 w-5" />
                     <span className="flex-1">{item.name}</span>
-                    {showCount && (
-                      <span className={`
-                        px-2 py-0.5 text-xs font-semibold rounded-full
-                        ${
-                          isActive
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-slate-600 text-white'
-                        }
-                      `}>
-                        {count}
-                      </span>
-                    )}
                   </Link>
                 )
               })}

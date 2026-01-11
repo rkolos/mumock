@@ -5,6 +5,14 @@ import Sidebar from '../components/admin/Sidebar'
 import Header from '../components/admin/Header'
 import TicketsList from '../components/admin/TicketsList'
 
+function TicketsListWrapper() {
+  return (
+    <Suspense fallback={<div className="p-6">Loading...</div>}>
+      <TicketsList />
+    </Suspense>
+  )
+}
+
 export default function AdminPage() {
   // На desktop sidebar всегда виден через CSS, на мобильных закрыт по умолчанию
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -17,7 +25,7 @@ export default function AdminPage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
         <main className="flex-1 overflow-y-auto">
-          <TicketsList />
+          <TicketsListWrapper />
         </main>
       </div>
     </div>
