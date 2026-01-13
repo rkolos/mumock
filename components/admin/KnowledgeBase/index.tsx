@@ -32,7 +32,7 @@ import {
   IndexStatus,
   FileStatus,
   FileType,
-} from '../../data/knowledgeBase'
+} from '../../../data/knowledgeBase'
 
 type TabType = 'files' | 'tickets' | 'simulator'
 
@@ -54,7 +54,7 @@ export default function KnowledgeBase() {
   const [files, setFiles] = useState<KnowledgeFile[]>(mockKnowledgeFiles)
   
   // Преобразуем тикеты в единый формат статей
-  const ticketArticles: KnowledgeArticle[] = mockKnowledgeTickets.map((ticket) => ({
+  const ticketArticles: KnowledgeArticle[] = mockKnowledgeTickets.map((ticket: KnowledgeTicket) => ({
     id: ticket.id,
     body: ticket.content,
     created_at: ticket.created_at,

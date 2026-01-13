@@ -2,12 +2,12 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { FileEdit, Plus, Search, Trash2, MoreVertical, FolderTree, Folder, ChevronDown, FolderOpen, Edit, CornerUpLeft, X, FileText } from 'lucide-react'
-import { KnowledgeArticle, KBFolder } from '../../../data/knowledgeBase'
-import ArticlesBreadcrumbs from './ArticlesBreadcrumbs'
-import MoveArticleDialog from './MoveArticleDialog'
-import MoveFolderDialog from './MoveFolderDialog'
-import ArticleViewer from './ArticleViewer'
-import { getParentFolder, getDirectSubfoldersCount, getDirectArticlesCount, getFolderPath } from '../../../utils/kbFolders'
+import { KnowledgeArticle, KBFolder } from '../../../../data/knowledgeBase'
+import ArticlesBreadcrumbs from '../ArticlesBreadcrumbs'
+import MoveArticleDialog from '../MoveArticleDialog'
+import MoveFolderDialog from '../MoveFolderDialog'
+import ArticleViewer from '../ArticleViewer'
+import { getParentFolder, getDirectSubfoldersCount, getDirectArticlesCount, getFolderPath } from '../../../../utils/kbFolders'
 
 interface SearchResult {
   id: string

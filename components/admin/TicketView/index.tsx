@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
   ExternalLink,
@@ -51,13 +51,13 @@ import {
   RotateCcw,
   Zap,
 } from 'lucide-react'
-import { mockTickets, Ticket } from '../../data/tickets'
-import { mockTags } from '../../data/tags'
-import AiContextBar from './AiContextBar'
-import SourcePreviewModal from './SourcePreviewModal'
-import Tooltip from './Tooltip'
-import CloseTicketDialog from './CloseTicketDialog'
-import MacrosMenu from './MacrosMenu'
+import { mockTickets, Ticket } from '../../../data/tickets'
+import { mockTags } from '../../../data/tags'
+import AiContextBar from '../AiContextBar'
+import SourcePreviewModal from '../SourcePreviewModal'
+import Tooltip from '../Tooltip'
+import CloseTicketDialog from '../CloseTicketDialog'
+import MacrosMenu from '../MacrosMenu'
 
 interface Message {
   id: string
@@ -95,7 +95,9 @@ interface TicketViewProps {
 
 export default function TicketView({ ticketId }: TicketViewProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const ticket = mockTickets.find((t) => t.id === ticketId)
+  const activeView = searchParams.get('view')
   const [selectedTicketId, setSelectedTicketId] = useState(ticketId)
   const [messageText, setMessageText] = useState('')
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false)
@@ -585,6 +587,30 @@ export default function TicketView({ ticketId }: TicketViewProps) {
     // Здесь будет логика обновления реакций
     // Пока просто закрываем пикер
     setEmojiPickerOpen(null)
+  }
+
+  // Функция форматирования названия Smart View
+  const formatViewLabel = (view: string): string => {
+    const viewMap: Record<string, string> = {
+      'your_inbox': 'Your Inbox',
+      'mentions': 'Mentions',
+      'awaiting_reply': 'Awaiting Reply',
+      'unassigned': 'Unassigned',
+      'all_tickets': 'All Tickets',
+    }
+    return viewMap[view] || view.charAt(0).toUpperCase() + view.slice(1).replace(/_/g, ' ')
+  }
+
+  // Функция форматирования названия Smart View
+  const formatViewLabel = (view: string): string => {
+    const viewMap: Record<string, string> = {
+      'your_inbox': 'Your Inbox',
+      'mentions': 'Mentions',
+      'awaiting_reply': 'Awaiting Reply',
+      'unassigned': 'Unassigned',
+      'all_tickets': 'All Tickets',
+    }
+    return viewMap[view] || view.charAt(0).toUpperCase() + view.slice(1).replace(/_/g, ' ')
   }
 
   // Функция парсинга @mentions
@@ -1278,6 +1304,28 @@ export default function TicketView({ ticketId }: TicketViewProps) {
               )}
             </div>
           </div>
+
+          {/* View Chip (если активен Smart View) */}
+          {activeView && (
+            <div className="px-4 py-2 border-b border-[#F0F0F0]">
+              <div className="px-3 py-1.5 bg-purple-100 text-purple-800 text-sm rounded-md inline-flex items-center gap-1.5">
+                <span>View: {formatViewLabel(activeView)}</span>
+                <button
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      const newUrl = new URL(window.location.href)
+                      newUrl.searchParams.delete('view')
+                      router.replace(newUrl.pathname + newUrl.search, { scroll: false })
+                    }
+                  }}
+                  className="hover:bg-purple-200 rounded p-0.5 transition-colors"
+                  title="Remove view filter"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Фильтры */}
           <div className="px-4 py-2 border-b border-[#F0F0F0] relative" ref={filterMenuRef}>

@@ -19,6 +19,9 @@ export interface Ticket {
   // Notification fields
   unread_messages_count?: number
   has_private_mention?: boolean
+  // Smart Views fields
+  mentions?: string[] // Email пользователей, упомянутых в тикете
+  lastMessageAuthorId?: 'user' | 'admin' | 'system' // Автор последнего сообщения
   // Custom fields from widget
   custom_fields?: Array<{
     label: string
@@ -53,6 +56,8 @@ export const mockTickets: Ticket[] = [
     waitTimeHours: 2.25,
     unread_messages_count: 3,
     has_private_mention: true,
+    mentions: ['v.panov@dt.team'],
+    lastMessageAuthorId: 'user',
     // Сценарий А: Заполненное досье
     dossier_content: `# Основная информация
 
@@ -93,6 +98,7 @@ export const mockTickets: Ticket[] = [
     source: 'web',
     waitTimeHours: 0.5,
     unread_messages_count: 1,
+    lastMessageAuthorId: 'admin',
     // Сценарий Б: Пустое досье (для режима редактирования)
     custom_fields: [
       {
@@ -133,6 +139,8 @@ export const mockTickets: Ticket[] = [
     source: 'discord',
     waitTimeHours: 5.0,
     has_private_mention: true,
+    mentions: ['v.panov@dt.team'],
+    lastMessageAuthorId: 'user',
   },
   {
     id: '4',
@@ -149,6 +157,7 @@ export const mockTickets: Ticket[] = [
     aiTitle: 'API timeout после 30 секунд',
     source: 'web',
     waitTimeHours: 1.2,
+    lastMessageAuthorId: 'admin',
   },
 ]
 

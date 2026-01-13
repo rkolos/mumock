@@ -3,6 +3,7 @@
 import { X } from 'lucide-react'
 
 interface TicketsFilterChipsProps {
+  activeView: string | null
   sourceFilter: string | null
   statusFilters: string[]
   priorityFilters: string[]
@@ -10,6 +11,7 @@ interface TicketsFilterChipsProps {
   tagsFilters: string[]
   categoriesFilters: string[]
   dateFilter: { from: string; to: string } | null
+  onRemoveView: () => void
   onRemoveSource: () => void
   onRemoveStatus: () => void
   onRemovePriority: () => void
@@ -58,7 +60,20 @@ function formatPriority(priority: string): string {
   return priority.charAt(0).toUpperCase() + priority.slice(1)
 }
 
+// Функция форматирования названия Smart View
+function formatViewLabel(view: string): string {
+  const viewMap: Record<string, string> = {
+    'your_inbox': 'Your Inbox',
+    'mentions': 'Mentions',
+    'awaiting_reply': 'Awaiting Reply',
+    'unassigned': 'Unassigned',
+    'all_tickets': 'All Tickets',
+  }
+  return viewMap[view] || view.charAt(0).toUpperCase() + view.slice(1).replace(/_/g, ' ')
+}
+
 export default function TicketsFilterChips({
+  activeView,
   sourceFilter,
   statusFilters,
   priorityFilters,
@@ -66,6 +81,7 @@ export default function TicketsFilterChips({
   tagsFilters,
   categoriesFilters,
   dateFilter,
+  onRemoveView,
   onRemoveSource,
   onRemoveStatus,
   onRemovePriority,
@@ -76,6 +92,7 @@ export default function TicketsFilterChips({
   onClearAll,
 }: TicketsFilterChipsProps) {
   const hasActiveFilters =
+    activeView !== null ||
     sourceFilter !== null ||
     statusFilters.length > 0 ||
     priorityFilters.length > 0 ||
@@ -90,6 +107,20 @@ export default function TicketsFilterChips({
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
+      {/* View Chip (отображается первым) */}
+      {activeView && (
+        <div className="px-3 py-1.5 bg-purple-100 text-purple-800 text-sm rounded-md flex items-center gap-1.5">
+          <span>View: {formatViewLabel(activeView)}</span>
+          <button
+            onClick={onRemoveView}
+            className="hover:bg-purple-200 rounded p-0.5 transition-colors"
+            title="Remove view filter"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Source Filter */}
       {sourceFilter && (
         <div className="px-3 py-1.5 bg-[#2563eb] text-white text-sm rounded-md flex items-center gap-1.5">
