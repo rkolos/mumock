@@ -601,18 +601,6 @@ export default function TicketView({ ticketId }: TicketViewProps) {
     return viewMap[view] || view.charAt(0).toUpperCase() + view.slice(1).replace(/_/g, ' ')
   }
 
-  // Функция форматирования названия Smart View
-  const formatViewLabel = (view: string): string => {
-    const viewMap: Record<string, string> = {
-      'your_inbox': 'Your Inbox',
-      'mentions': 'Mentions',
-      'awaiting_reply': 'Awaiting Reply',
-      'unassigned': 'Unassigned',
-      'all_tickets': 'All Tickets',
-    }
-    return viewMap[view] || view.charAt(0).toUpperCase() + view.slice(1).replace(/_/g, ' ')
-  }
-
   // Функция парсинга @mentions
   const parseMentions = (text: string) => {
     const parts: Array<{ type: 'text' | 'mention'; content: string }> = []
