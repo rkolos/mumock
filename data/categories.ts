@@ -72,7 +72,8 @@ export interface FormField {
   // Extended fields for form builder
   label?: string // Display label (preferred over name)
   placeholder?: string // Placeholder text
-  type?: 'short' | 'paragraph' // Field type (short = string, paragraph = textarea)
+  type?: 'short' | 'paragraph' | 'dropdown' | 'radio' | 'checkbox' // Field type (short = string, paragraph = textarea, dropdown/radio/checkbox = selection)
+  options?: Array<{ value: string; label: string }> // Options for dropdown, radio, checkbox fields
 }
 
 export const mockCategories: Category[] = [
@@ -120,24 +121,103 @@ export const mockCategories: Category[] = [
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440001',
-    name: '🗑 Closed',
-    hasAccess: false,
+    name: '📋 Полная форма',
+    hasAccess: true,
     createdAt: '2024-01-16T10:30:00Z',
     organizationId: 'org-123',
     source_type: 'web_widget',
     assignedRoles: [],
-    categoryName: '🗑 Closed',
+    categoryName: '📋 Полная форма',
     maxTickets: 200,
-    ticketNameTemplate: 'Closed-{num}',
+    ticketNameTemplate: 'Full-{num}',
     maxOpenTicketsPerUser: 50,
     integration_config: {
-      widget_color: '#FF0000',
-      widget_title: 'Закрытые тикеты',
+      widget_color: '#6366F1',
+      widget_title: 'Создать тикет',
       success_text: 'Спасибо за обращение!',
       return_url: 'https://example.com',
       allow_guest_submission: true,
-      priority: 'low',
-      formFields: [],
+      priority: 'medium',
+      formFields: [
+        {
+          id: 'field-1',
+          name: 'subject',
+          technicalId: 'subject',
+          required: true,
+          short: true,
+          label: 'Тема',
+          placeholder: 'Введите тему обращения',
+          type: 'short',
+        },
+        {
+          id: 'field-2',
+          name: 'email',
+          technicalId: 'email',
+          required: true,
+          short: true,
+          label: 'Email',
+          placeholder: 'example@mail.com',
+          type: 'short',
+        },
+        {
+          id: 'field-3',
+          name: 'description',
+          technicalId: 'description',
+          required: true,
+          short: false,
+          label: 'Описание',
+          placeholder: 'Опишите вашу проблему или вопрос',
+          type: 'paragraph',
+        },
+        {
+          id: 'field-4',
+          name: 'priority',
+          technicalId: 'priority',
+          required: true,
+          short: false,
+          label: 'Приоритет',
+          placeholder: '',
+          type: 'dropdown',
+          options: [
+            { value: 'low', label: 'Низкий' },
+            { value: 'medium', label: 'Средний' },
+            { value: 'high', label: 'Высокий' },
+            { value: 'urgent', label: 'Срочный' },
+          ],
+        },
+        {
+          id: 'field-5',
+          name: 'department',
+          technicalId: 'department',
+          required: false,
+          short: false,
+          label: 'Отдел',
+          placeholder: '',
+          type: 'radio',
+          options: [
+            { value: 'technical', label: 'Технический' },
+            { value: 'sales', label: 'Продажи' },
+            { value: 'support', label: 'Поддержка' },
+            { value: 'other', label: 'Другое' },
+          ],
+        },
+        {
+          id: 'field-6',
+          name: 'features',
+          technicalId: 'features',
+          required: false,
+          short: false,
+          label: 'Интересует',
+          placeholder: '',
+          type: 'checkbox',
+          options: [
+            { value: 'integration', label: 'Интеграция' },
+            { value: 'api', label: 'API доступ' },
+            { value: 'custom', label: 'Кастомизация' },
+            { value: 'training', label: 'Обучение' },
+          ],
+        },
+      ],
     },
     // Legacy fields
     discordCategory: false,

@@ -81,7 +81,11 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
     const categoryFields = categories[initialCategory]?.fields || []
     categoryFields.forEach((field: ConfigFormField) => {
       if (!initialData[field.name]) {
-        initialData[field.name] = field.type === 'radio' ? '' : ''
+        if (field.type === 'checkbox') {
+          initialData[field.name] = '[]'
+        } else {
+          initialData[field.name] = field.type === 'radio' ? '' : ''
+        }
       }
     })
 
@@ -118,7 +122,11 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
 
     newCategoryFields.forEach((field: ConfigFormField) => {
       if (!newData[field.name]) {
-        newData[field.name] = field.type === 'radio' ? '' : ''
+        if (field.type === 'checkbox') {
+          newData[field.name] = '[]'
+        } else {
+          newData[field.name] = field.type === 'radio' ? '' : ''
+        }
       }
     })
 
@@ -171,7 +179,42 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
     }
   }
 
+  const handleCheckboxChange = (fieldName: string, optionValue: string, checked: boolean) => {
+    const currentValue = formData[fieldName] || '[]'
+    let selectedValues: string[] = []
+    
+    try {
+      selectedValues = JSON.parse(currentValue) || []
+    } catch {
+      selectedValues = []
+    }
+
+    if (checked) {
+      if (!selectedValues.includes(optionValue)) {
+        selectedValues.push(optionValue)
+      }
+    } else {
+      selectedValues = selectedValues.filter(v => v !== optionValue)
+    }
+
+    handleInputChange(fieldName, JSON.stringify(selectedValues))
+  }
+
   const validateField = (field: ConfigFormField, value: string): string => {
+    if (field.type === 'checkbox') {
+      let selectedValues: string[] = []
+      try {
+        selectedValues = JSON.parse(value || '[]') || []
+      } catch {
+        selectedValues = []
+      }
+
+      if (field.required && selectedValues.length === 0) {
+        return `${field.label} обязателен для заполнения`
+      }
+      return ''
+    }
+
     const stringValue = String(value || '').trim()
     
     if (field.required && !stringValue) {
@@ -328,6 +371,9 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
     const globalValid = globalFields.every((field: ConfigFormField) => {
       if (field.type === 'file' || !field.required) return true
       const value = formData[field.name] || ''
+      if (field.type === 'checkbox') {
+        return !validateField(field, value)
+      }
       return value.trim() && !validateField(field, value)
     })
 
@@ -335,6 +381,9 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
     const categoryValid = categoryFields.every((field: ConfigFormField) => {
       if (!field.required) return true
       const value = formData[field.name] || ''
+      if (field.type === 'checkbox') {
+        return !validateField(field, value)
+      }
       return value.trim() && !validateField(field, value)
     })
 
@@ -432,6 +481,46 @@ export default function TicketForm({ onNavigate, params = {} }: TicketFormProps)
                   value={option.value}
                   checked={value === option.value}
                   onChange={(e) => handleInputChange(field.name, e.target.value)}
+                  className="text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">{option.label}</span>
+              </label>
+            ))}
+          </div>
+          {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+        </div>
+      )
+    }
+
+    if (field.type === 'checkbox') {
+      let selectedValues: string[] = []
+      try {
+        selectedValues = JSON.parse(value || '[]') || []
+      } catch {
+        selectedValues = []
+      }
+
+      return (
+        <div key={field.name}>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {field.label}
+            {field.required && <span className="text-red-500">*</span>}
+            {isAiFilled && (
+              <span className="ml-2 inline-flex items-center gap-1 text-blue-600 text-xs">
+                <Bot className="h-3 w-3" />
+                <span>ИИ</span>
+              </span>
+            )}
+          </label>
+          <div className={`space-y-2 p-3 rounded-lg ${isAiFilled ? 'bg-blue-50 border border-blue-200' : ''}`}>
+            {field.options?.map((option) => (
+              <label key={option.value} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name={field.name}
+                  value={option.value}
+                  checked={selectedValues.includes(option.value)}
+                  onChange={(e) => handleCheckboxChange(field.name, option.value, e.target.checked)}
                   className="text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-700">{option.label}</span>

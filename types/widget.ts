@@ -15,7 +15,7 @@ export interface FormFieldOption {
 export interface FormField {
   name: string
   label: string
-  type: 'text' | 'email' | 'textarea' | 'dropdown' | 'radio' | 'date' | 'file'
+  type: 'text' | 'email' | 'textarea' | 'dropdown' | 'radio' | 'checkbox' | 'date' | 'file'
   placeholder?: string
   required: boolean
   rows?: number

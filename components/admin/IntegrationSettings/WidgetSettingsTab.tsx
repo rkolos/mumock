@@ -1,6 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { IntegrationSettings } from '../../../data/integrations'
+import WidgetPreviewSimulator from './WidgetPreviewSimulator'
 
 interface WidgetSettingsTabProps {
   settings: IntegrationSettings
@@ -11,6 +13,8 @@ export default function WidgetSettingsTab({
   settings,
   onSettingsChange,
 }: WidgetSettingsTabProps) {
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
+
   const handleChange = (field: keyof IntegrationSettings, value: string | boolean) => {
     onSettingsChange({
       ...settings,
@@ -19,7 +23,8 @@ export default function WidgetSettingsTab({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="lg:col-span-8 space-y-6">
       <div>
         <h3 className="text-base font-semibold text-gray-900 mb-4">Global Widget Appearance</h3>
         <div className="space-y-4">
@@ -159,6 +164,17 @@ export default function WidgetSettingsTab({
             </button>
           </div>
         </div>
+      </div>
+      </div>
+
+      {/* Simulator */}
+      <div className="lg:col-span-4 lg:sticky lg:top-6 h-fit">
+        <WidgetPreviewSimulator
+          welcomeText={settings.default_widget_title || 'How can we help you?'}
+          successMessage={settings.default_welcome_message || 'Thank you for contacting us!'}
+          selectedCategoryId={selectedCategoryId}
+          onCategoryClick={setSelectedCategoryId}
+        />
       </div>
     </div>
   )
