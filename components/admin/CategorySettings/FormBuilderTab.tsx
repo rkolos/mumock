@@ -12,6 +12,9 @@ interface FormBuilderTabProps {
 export default function FormBuilderTab({ category, onFormFieldsChange }: FormBuilderTabProps) {
   const [previewMode, setPreviewMode] = useState<'discord' | 'web'>('discord')
 
+  // Получаем formFields из integration_config
+  const formFields = category.integration_config?.formFields || []
+
   const handleAddField = () => {
     const newField: FormField = {
       id: `field-${Date.now()}`,
@@ -20,11 +23,11 @@ export default function FormBuilderTab({ category, onFormFieldsChange }: FormBui
       required: false,
       short: true,
     }
-    onFormFieldsChange([...category.formFields, newField])
+    onFormFieldsChange([...formFields, newField])
   }
 
   const handleDeleteField = (fieldId: string) => {
-    onFormFieldsChange(category.formFields.filter((f) => f.id !== fieldId))
+    onFormFieldsChange(formFields.filter((f) => f.id !== fieldId))
   }
 
   const handleEditField = (fieldId: string) => {
@@ -62,7 +65,7 @@ export default function FormBuilderTab({ category, onFormFieldsChange }: FormBui
 
         {/* Fields List */}
         <div className="space-y-3">
-          {category.formFields.map((field) => (
+          {formFields.map((field) => (
             <div
               key={field.id}
               className="p-4 border border-[#e2e8f0] rounded-lg hover:bg-gray-50 transition-colors cursor-grab"
@@ -101,7 +104,7 @@ export default function FormBuilderTab({ category, onFormFieldsChange }: FormBui
               </div>
             </div>
           ))}
-          {category.formFields.length === 0 && (
+          {formFields.length === 0 && (
             <p className="text-sm text-gray-500 text-center py-8">
               Нет полей. Нажмите "Add Field" чтобы добавить.
             </p>
@@ -143,7 +146,7 @@ export default function FormBuilderTab({ category, onFormFieldsChange }: FormBui
               <div className="space-y-4">
                 <div className="p-4 bg-gray-900 rounded-lg text-white">
                   <p className="text-sm font-medium mb-3">Discord Modal</p>
-                  {category.formFields.map((field) => (
+                  {formFields.map((field) => (
                     <div key={field.id} className="mb-3">
                       <label className="block text-xs text-gray-300 mb-1">
                         {field.name} {field.required && '*'}
@@ -160,7 +163,7 @@ export default function FormBuilderTab({ category, onFormFieldsChange }: FormBui
               </div>
             ) : (
               <div className="space-y-4">
-                {category.formFields.map((field) => (
+                {formFields.map((field) => (
                   <div key={field.id}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       {field.name} {field.required && '*'}
@@ -176,7 +179,7 @@ export default function FormBuilderTab({ category, onFormFieldsChange }: FormBui
               </div>
             )}
 
-            {category.formFields.length === 0 && (
+            {formFields.length === 0 && (
               <p className="text-sm text-gray-500 text-center py-8">
                 Предпросмотр появится после добавления полей
               </p>
