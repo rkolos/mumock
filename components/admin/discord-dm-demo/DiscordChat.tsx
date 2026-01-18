@@ -24,11 +24,11 @@ export default function DiscordChat({ messages, isTyping = false, typingAuthor }
           if (!message) return null
           
           const prevMessage = index > 0 ? messages[index - 1] : null
-          const showAvatar = !prevMessage || 
+          const showAvatar: boolean = Boolean(!prevMessage || 
             !prevMessage.author || 
             prevMessage.author !== message.author || 
             (prevMessage.timestamp && message.timestamp && 
-              (new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime()) > 300000) // 5 minutes
+              (new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime()) > 300000)) // 5 minutes
           
           return (
             <div
