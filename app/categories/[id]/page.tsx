@@ -1,14 +1,16 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import Sidebar from '../../../components/admin/Sidebar'
 import Header from '../../../components/admin/Header'
 import CategoryDetail from '../../../components/admin/CategoryDetail'
 import { useState, Suspense } from 'react'
 
-export default function CategoryPage() {
+function CategoryPageContent() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const id = params.id as string
+  const integrationParam = searchParams.get('integration')
   // На desktop sidebar всегда виден через CSS, на мобильных закрыт по умолчанию
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -20,10 +22,17 @@ export default function CategoryPage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
         <main className="flex-1 overflow-y-auto">
-          <CategoryDetail categoryId={id} />
+          <CategoryDetail categoryId={id} integrationSourceType={integrationParam as any} />
         </main>
       </div>
     </div>
   )
 }
 
+export default function CategoryPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen bg-[#f8fafc] items-center justify-center">Loading...</div>}>
+      <CategoryPageContent />
+    </Suspense>
+  )
+}

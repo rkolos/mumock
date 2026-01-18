@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { RefreshCw, ArrowDown, Filter } from 'lucide-react'
+import { RefreshCw, ArrowDown, Filter, MessageCircle, Globe, Mail } from 'lucide-react'
 import { mockTickets, Ticket } from '../../../data/tickets'
 import { useWidget } from '../../../contexts/WidgetContext'
 import TicketsFilterChips from '../TicketsFilterChips'
 import TicketsFilterDropdown from '../TicketsFilterDropdown'
 import QuickTimeFilters from '../QuickTimeFilters'
 import { CURRENT_USER_EMAIL } from '../../../utils/currentUser'
+import Tooltip from '../Tooltip'
 
 export default function TicketsList() {
   const router = useRouter()
@@ -56,6 +57,58 @@ export default function TicketsList() {
       '12h': openTickets.filter(t => t.waitTimeHours !== undefined && t.waitTimeHours >= 12).length,
       '24h': openTickets.filter(t => t.waitTimeHours !== undefined && t.waitTimeHours >= 24).length,
     }
+  }
+
+  // Получение иконки источника
+  const getSourceIcon = (source?: Ticket['source']) => {
+    switch (source) {
+      case 'discord':
+        return MessageCircle
+      case 'discord_dm':
+        return MessageCircle
+      case 'telegram':
+        return MessageCircle
+      case 'whatsapp':
+        return MessageCircle
+      case 'web':
+        return Globe
+      default:
+        return MessageCircle
+    }
+  }
+
+  // Получение цвета иконки источника
+  const getSourceIconColor = (source?: Ticket['source']) => {
+    switch (source) {
+      case 'discord':
+        return 'text-[#5865F2]'
+      case 'discord_dm':
+        return 'text-[#5865F2]'
+      case 'telegram':
+        return 'text-[#0088cc]'
+      case 'whatsapp':
+        return 'text-[#25D366]'
+      case 'web':
+        return 'text-gray-600'
+      default:
+        return 'text-gray-400'
+    }
+  }
+
+  // Рендеринг иконки источника с поддержкой Discord DM
+  const renderSourceIcon = (source?: Ticket['source'], className?: string) => {
+    if (source === 'discord_dm') {
+      return (
+        <Tooltip text="Discord Direct Message" asChild>
+          <div className="relative inline-flex items-center justify-center">
+            <MessageCircle className={className} />
+            <Mail className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 text-[#5865F2] bg-white rounded-full p-0.5" style={{ fontSize: '8px' }} />
+          </div>
+        </Tooltip>
+      )
+    }
+    const IconComponent = getSourceIcon(source)
+    return <IconComponent className={className} />
   }
 
   // Функция фильтрации тикетов
@@ -728,7 +781,10 @@ export default function TicketsList() {
                     {ticket.username}
                   </td>
                   <td className="px-4 py-2.5 text-sm text-gray-600">
-                    {ticket.channel}
+                    <div className="flex items-center gap-2">
+                      {ticket.source && renderSourceIcon(ticket.source, `h-4 w-4 ${getSourceIconColor(ticket.source)} flex-shrink-0`)}
+                      <span>{ticket.channel}</span>
+                    </div>
                   </td>
                   <td className="px-4 py-2.5 text-sm text-gray-900">
                     {ticket.category}

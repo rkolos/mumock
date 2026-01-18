@@ -26,6 +26,7 @@ import {
   Clock,
   UserX,
   Layers,
+  Puzzle,
 } from 'lucide-react'
 import { useWidget } from '../../../contexts/WidgetContext'
 import { useEffect, useState, useRef } from 'react'
@@ -188,6 +189,7 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       '/panels': 'panels',
       '/members': 'members',
       '/roles': 'roles',
+      '/integrations': 'integrations',
       '/migration': 'migration',
       '/macros': 'macros'
     }
@@ -235,6 +237,7 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       { name: 'Panels', href: '/panels', icon: ShieldCheck },
       { name: 'Members', href: '/members', icon: Users },
       { name: 'Roles', href: '/roles', icon: UserCheck },
+      { name: 'Integrations', href: '/integrations', icon: Puzzle },
       { name: 'Categories', href: '/categories', icon: LayoutGrid },
       { name: 'Knowledge Base', href: '/knowledge-base', icon: Brain },
       { name: 'Macros', href: '/macros', icon: Zap },

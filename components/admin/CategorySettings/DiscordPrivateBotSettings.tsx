@@ -2,24 +2,25 @@
 
 import { useState } from 'react'
 import { Plus, Edit, Trash2, GripVertical, X } from 'lucide-react'
-import { IntegrationConfig, FormField } from '../../../data/categories'
+import { Category, IntegrationConfig, FormField } from '../../../data/categories'
 
-interface DiscordSettingsProps {
+interface DiscordPrivateBotSettingsProps {
+  category: Category
   config: IntegrationConfig
   onConfigChange: (config: IntegrationConfig) => void
 }
 
-export default function DiscordSettings({ config, onConfigChange }: DiscordSettingsProps) {
-  const handleChange = (field: keyof IntegrationConfig, value: string | boolean | number | FormField[] | 'low' | 'medium' | 'high') => {
+export default function DiscordPrivateBotSettings({ category, config, onConfigChange }: DiscordPrivateBotSettingsProps) {
+  const formFields = config.formFields || []
+  const [editingFieldId, setEditingFieldId] = useState<string | null>(null)
+  const [draggedFieldId, setDraggedFieldId] = useState<string | null>(null)
+  
+  const handleChange = (field: keyof IntegrationConfig, value: string | boolean | number | 'low' | 'medium' | 'high' | FormField[]) => {
     onConfigChange({
       ...config,
       [field]: value,
     })
   }
-
-  const formFields = config.formFields || []
-  const [editingFieldId, setEditingFieldId] = useState<string | null>(null)
-  const [draggedFieldId, setDraggedFieldId] = useState<string | null>(null)
 
   const handleAddField = () => {
     if (formFields.length >= 5) {
@@ -36,12 +37,12 @@ export default function DiscordSettings({ config, onConfigChange }: DiscordSetti
       type: 'short',
       placeholder: '',
     }
-    handleChange('formFields', [...formFields, newField])
+    handleChange('formFields', [...formFields, newField] as FormField[])
     setEditingFieldId(newField.id)
   }
 
   const handleDeleteField = (fieldId: string) => {
-    handleChange('formFields', formFields.filter((f) => f.id !== fieldId))
+    handleChange('formFields', formFields.filter((f) => f.id !== fieldId) as FormField[])
     if (editingFieldId === fieldId) {
       setEditingFieldId(null)
     }
@@ -51,7 +52,7 @@ export default function DiscordSettings({ config, onConfigChange }: DiscordSetti
     const updatedFields = formFields.map((f) =>
       f.id === fieldId ? { ...f, ...updates } : f
     )
-    handleChange('formFields', updatedFields)
+    handleChange('formFields', updatedFields as FormField[])
   }
 
   const handleDragStart = (e: React.DragEvent, fieldId: string) => {
@@ -77,7 +78,7 @@ export default function DiscordSettings({ config, onConfigChange }: DiscordSetti
     const [draggedField] = newFields.splice(draggedIndex, 1)
     newFields.splice(targetIndex, 0, draggedField)
 
-    handleChange('formFields', newFields)
+    handleChange('formFields', newFields as FormField[])
     setDraggedFieldId(null)
   }
 
@@ -88,25 +89,7 @@ export default function DiscordSettings({ config, onConfigChange }: DiscordSetti
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-base font-semibold text-gray-900 mb-4">Channel Config</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Discord Category ID
-            </label>
-            <input
-              type="text"
-              value={config.discord_category_id || ''}
-              onChange={(e) => handleChange('discord_category_id', e.target.value)}
-              className="w-full px-3 py-2 bg-gray-50 border-0 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="123456789012345678"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-base font-semibold text-gray-900 mb-4">Priority</h3>
+        <h3 className="text-base font-semibold text-gray-900 mb-4">Limits & Logic</h3>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -121,15 +104,19 @@ export default function DiscordSettings({ config, onConfigChange }: DiscordSetti
               <option value="medium">Medium</option>
               <option value="high">High</option>
             </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Приоритет по умолчанию для тикетов этой категории
+            </p>
           </div>
         </div>
       </div>
 
+      {/* Form Builder Section */}
       <div>
         <h3 className="text-base font-semibold text-gray-900 mb-4">Form Builder</h3>
         <div className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
           <p className="text-sm text-gray-700">
-            Кастомные формы позволяют собирать дополнительную информацию от пользователей при создании тикета.
+            Конструктор формы, которая всплывет в Дискорде после выбора категории
           </p>
         </div>
 
@@ -273,6 +260,39 @@ export default function DiscordSettings({ config, onConfigChange }: DiscordSetti
           )}
         </div>
 
+        {/* First Message Field Selection */}
+        {formFields.length > 0 && (
+          <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Поле для первого сообщения пользователя
+            </label>
+            <p className="text-xs text-gray-500 mb-2">
+              Выберите поле формы, в которое будет автоматически вставлен текст первого сообщения пользователя
+            </p>
+            <select
+              value={config.first_message_field_id || ''}
+              onChange={(e) => {
+                const value = e.target.value || ''
+                if (value === '') {
+                  // Удаляем поле из конфигурации если выбрано "Не указано"
+                  const { first_message_field_id, ...rest } = config
+                  onConfigChange(rest as IntegrationConfig)
+                } else {
+                  handleChange('first_message_field_id', value)
+                }
+              }}
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Не указано</option>
+              {formFields.map((field) => (
+                <option key={field.id} value={field.id}>
+                  {field.label || field.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <button
           onClick={handleAddField}
           disabled={formFields.length >= 5}
@@ -281,46 +301,7 @@ export default function DiscordSettings({ config, onConfigChange }: DiscordSetti
           <Plus className="h-4 w-4" />
           <span>Add Field {formFields.length >= 5 ? '(Max 5)' : ''}</span>
         </button>
-
-        {formFields.length > 0 && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <h4 className="text-sm font-semibold text-gray-900 mb-4">Form Preview (Discord)</h4>
-            <div className="p-4 bg-gray-900 rounded-lg text-white">
-              <p className="text-sm font-medium mb-3">Discord Modal</p>
-              {formFields.map((field) => {
-                const fieldLabel = field.label || field.name
-                const fieldType = field.type || (field.short ? 'short' : 'paragraph')
-                const isTextarea = fieldType === 'paragraph'
-                const placeholder = field.placeholder || `Enter ${fieldLabel}`
-
-                return (
-                  <div key={field.id} className="mb-3">
-                    <label className="block text-xs text-gray-300 mb-1">
-                      {fieldLabel} {field.required && '*'}
-                    </label>
-                    {isTextarea ? (
-                      <textarea
-                        readOnly
-                        rows={4}
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white text-sm resize-none"
-                        placeholder={placeholder}
-                      />
-                    ) : (
-                      <input
-                        type="text"
-                        readOnly
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white text-sm"
-                        placeholder={placeholder}
-                      />
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
 }
-
