@@ -48,6 +48,7 @@ export interface IntegrationSettings {
   telegram_bot_token?: string
   telegram_bot_username?: string
   telegram_bot_id?: string
+  telegram_chat_id?: string // Chat ID for admin notifications
   
   // Default settings
   default_welcome_message?: string
