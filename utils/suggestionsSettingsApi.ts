@@ -144,4 +144,3 @@ export async function unbanUser(userId: string): Promise<void> {
 
   return Promise.resolve()
 }
-

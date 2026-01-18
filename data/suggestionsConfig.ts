@@ -62,4 +62,3 @@ export const mockBannedUsers: BannedUser[] = [
     banned_at: '2024-01-15T09:20:00Z',
   },
 ]
-

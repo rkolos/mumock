@@ -14,7 +14,7 @@ export interface Ticket {
   errorLogs?: string
   // AI and source fields
   aiTitle?: string
-  source?: 'discord' | 'telegram' | 'whatsapp' | 'web' | 'email' | 'api'
+  source?: 'discord' | 'discord_dm' | 'telegram' | 'whatsapp' | 'web' | 'email' | 'api'
   waitTimeHours?: number
   // Notification fields
   unread_messages_count?: number
@@ -37,6 +37,19 @@ export interface Ticket {
     url: string
     type: 'image' | 'pdf' | 'other'
   }>
+  // Discord Profile fields
+  discordProfile?: {
+    username: string
+    discriminator: string
+    avatarUrl?: string
+    bannerColor?: string
+    bannerUrl?: string
+    status: 'online' | 'offline'
+    badges?: Array<{ name: string; icon: string; color: string }>
+    discordId: string
+    registeredAt: string
+    joinedAt: string
+  }
 }
 
 export const mockTickets: Ticket[] = [
@@ -158,6 +171,36 @@ export const mockTickets: Ticket[] = [
     source: 'web',
     waitTimeHours: 1.2,
     lastMessageAuthorId: 'admin',
+  },
+  {
+    id: 'ticket-dm-001',
+    username: 'nagibator2000',
+    channel: 'Direct Message',
+    category: 'General',
+    assignedUsers: [],
+    tags: ['question'],
+    priority: 'medium',
+    status: 'open',
+    createdAt: '2024-01-18T10:00:00Z',
+    aiTitle: "Can't login to my account",
+    source: 'discord_dm',
+    waitTimeHours: 0.17,
+    unread_messages_count: 1,
+    lastMessageAuthorId: 'user',
+    discordProfile: {
+      username: 'ninja_fan',
+      discriminator: '1337',
+      avatarUrl: '/assets/avatar_mock.png',
+      bannerColor: '#7289da',
+      status: 'online',
+      badges: [
+        { name: 'Staff', icon: 'shield_blue', color: '#5865F2' },
+        { name: 'Bug Hunter', icon: 'bug_green', color: '#43B581' },
+      ],
+      discordId: '84738274837482',
+      registeredAt: '10 Nov 2019',
+      joinedAt: '15 Aug 2023',
+    },
   },
 ]
 

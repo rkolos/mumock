@@ -87,6 +87,11 @@ interface Message {
   translatedContent?: string
   translatedTo?: string
   isTranslated?: boolean
+  type?: 'text' | 'sticker'
+  status?: 'sent' | 'delivered' | 'failed'
+  errorReason?: string
+  discordTag?: string
+  discordProfileUrl?: string
 }
 
 interface TicketViewProps {
@@ -525,6 +530,39 @@ export default function TicketView({ ticketId }: TicketViewProps) {
       timestamp: '2025-12-15T10:25:00Z',
       isSystem: false,
     },
+    // Мок-данные для Discord DM
+    ...(ticket.source === 'discord_dm' ? [
+      {
+        id: '7',
+        author: ticket.username,
+        authorId: 'user',
+        type: 'sticker' as const,
+        content: '[Sticker: Wumpus Wave]',
+        timestamp: '2025-12-15T10:00:00Z',
+        isSystem: false,
+      },
+      {
+        id: '8',
+        author: 'admin@example.com',
+        authorId: 'admin',
+        type: 'text' as const,
+        content: 'Checking logs...',
+        status: 'delivered' as const,
+        timestamp: '2025-12-15T10:05:00Z',
+        isSystem: false,
+      },
+      {
+        id: '9',
+        author: 'admin@example.com',
+        authorId: 'admin',
+        type: 'text' as const,
+        content: 'Please check your settings.',
+        status: 'failed' as const,
+        errorReason: 'Error 50007: Cannot send messages to this user',
+        timestamp: '2025-12-15T10:10:00Z',
+        isSystem: false,
+      },
+    ] : []),
   ]
 
   // Mock данные для Team Chat
@@ -704,6 +742,8 @@ export default function TicketView({ ticketId }: TicketViewProps) {
     switch (source) {
       case 'discord':
         return MessageCircle
+      case 'discord_dm':
+        return MessageCircle // Базовый компонент, специальный рендер будет в renderSourceIcon
       case 'telegram':
         return MessageCircle
       case 'whatsapp':
@@ -715,10 +755,26 @@ export default function TicketView({ ticketId }: TicketViewProps) {
     }
   }
 
+  // Рендеринг иконки источника с поддержкой Discord DM
+  const renderSourceIcon = (source?: Ticket['source'], className?: string) => {
+    if (source === 'discord_dm') {
+      return (
+        <div className="relative inline-flex items-center justify-center">
+          <MessageCircle className={className} />
+          <Mail className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 text-[#5865F2] bg-white rounded-full p-0.5" style={{ fontSize: '8px' }} />
+        </div>
+      )
+    }
+    const IconComponent = getSourceIcon(source)
+    return <IconComponent className={className} />
+  }
+
   // Получение цвета иконки источника
   const getSourceIconColor = (source?: Ticket['source']) => {
     switch (source) {
       case 'discord':
+        return 'text-[#5865F2]'
+      case 'discord_dm':
         return 'text-[#5865F2]'
       case 'telegram':
         return 'text-[#0088cc]'
@@ -736,6 +792,8 @@ export default function TicketView({ ticketId }: TicketViewProps) {
     switch (source) {
       case 'discord':
         return `Discord Channel: ${channel || 'N/A'}`
+      case 'discord_dm':
+        return 'Discord Direct Message'
       case 'telegram':
         return `Telegram: ${channel || 'N/A'}`
       case 'whatsapp':
@@ -1063,7 +1121,6 @@ export default function TicketView({ ticketId }: TicketViewProps) {
 
   const ticketTitle = `ticket-${ticket.username.replace('_', '')}-${ticket.id}`
   const aiTitle = getAiTitle(ticket)
-  const SourceIcon = getSourceIcon(ticket.source)
   const waitTime = formatWaitTime(ticket.waitTimeHours)
 
   return (
@@ -1088,7 +1145,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
               {/* Source Icon */}
               {ticket.source && (
                 <>
-                  <SourceIcon className={`h-4 w-4 ${getSourceIconColor(ticket.source)} flex-shrink-0`} />
+                  {renderSourceIcon(ticket.source, `h-4 w-4 ${getSourceIconColor(ticket.source)} flex-shrink-0`)}
                 </>
               )}
               {/* Ticket ID */}
@@ -1398,12 +1455,16 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                     </div>
                     {/* Badge источника с белой обводкой */}
                     {t.source && (
-                      <Tooltip text="Иконка источника тикета" asChild>
+                      <Tooltip text={t.source === 'discord_dm' ? 'Discord Direct Message' : 'Иконка источника тикета'} asChild>
                         <div 
                           className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-white flex items-center justify-center" 
                           style={{ border: '2px solid white' }}
                         >
-                          <TicketSourceIcon className={`h-2.5 w-2.5 ${getSourceIconColor(t.source)}`} />
+                          {t.source === 'discord_dm' ? (
+                            renderSourceIcon(t.source, `h-2.5 w-2.5 ${getSourceIconColor(t.source)}`)
+                          ) : (
+                            <TicketSourceIcon className={`h-2.5 w-2.5 ${getSourceIconColor(t.source)}`} />
+                          )}
                         </div>
                       </Tooltip>
                     )}
@@ -1824,13 +1885,15 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                         </div>
                       )}
 
-                      {/* Пузырь сообщения */}
+                        {/* Пузырь сообщения */}
                       <div
                         className={`px-3 py-2 relative inline-block ${
                           message.authorId === 'user'
                             ? translatedMessages[message.id] ? 'bg-[#FFF8E1] text-[#212121] shadow-sm' : 'bg-white text-[#212121] shadow-sm'
                             : message.authorId === 'admin'
-                            ? 'bg-blue-50 text-[#212121]'
+                            ? message.status === 'failed' 
+                              ? 'bg-red-50 text-[#212121] border border-red-300'
+                              : 'bg-blue-50 text-[#212121]'
                             : 'bg-white text-[#212121] shadow-sm'
                         }`}
                         style={{
@@ -1841,8 +1904,16 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                             : '12px',
                         }}
                       >
+                        {/* Стикер (для входящих сообщений) */}
+                        {message.type === 'sticker' && message.authorId === 'user' && (
+                          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-3 mb-2">
+                            <ImageIcon className="h-5 w-5 text-gray-500" />
+                            <span className="text-sm text-gray-600">{message.content || '[Sticker: Name]'}</span>
+                          </div>
+                        )}
+
                         {/* Текст сообщения */}
-                        {message.content && (
+                        {message.content && message.type !== 'sticker' && (
                           translatedMessages[message.id] ? (
                             // Split View режим
                             <>
@@ -2014,7 +2085,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                           </div>
                         )}
 
-                        {/* Мета-данные (Timestamp) */}
+                        {/* Мета-данные (Timestamp и статус доставки) */}
                         <div className={`flex items-center gap-1.5 ${message.authorId === 'admin' ? 'justify-end' : ''}`}>
                           {message.edited && (
                             <span className="text-[11px] italic" style={{ color: 'rgba(0,0,0,0.45)' }}>(edited)</span>
@@ -2022,6 +2093,23 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                           <span className="text-[11px]" style={{ color: 'rgba(0,0,0,0.45)' }}>
                             {formatTime(message.timestamp)}
                           </span>
+                          {/* Статус доставки для исходящих сообщений */}
+                          {message.authorId === 'admin' && message.status === 'delivered' && (
+                            <div className="flex items-center gap-1 text-[11px] text-gray-500">
+                              <Check className="h-3 w-3" />
+                              <span>Sent to DM</span>
+                            </div>
+                          )}
+                          {message.authorId === 'admin' && message.status === 'failed' && (
+                            <div className="flex items-center gap-1 text-[11px] text-red-600">
+                              <AlertCircle className="h-3 w-3" />
+                              <span>Delivery Failed</span>
+                              <button className="ml-1 text-red-600 hover:text-red-700 flex items-center gap-1">
+                                <RefreshCw className="h-3 w-3" />
+                                <span>Retry</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -2142,6 +2230,12 @@ export default function TicketView({ ticketId }: TicketViewProps) {
               {/* Ввод сообщения */}
               <div className={`border-t border-gray-200 ${translatedInputText && ticketTargetLanguage ? 'bg-[#FFF8E1]' : 'bg-white'}`}>
                 <div className="p-4">
+                  {/* Подсказка Markdown для Discord DM */}
+                  {ticket.source === 'discord_dm' && (
+                    <div className="mb-2 text-xs text-gray-500">
+                      Supports Markdown: <strong>**bold**</strong>, <em>*italic*</em>, <span className="text-gray-600">&gt;quote</span>
+                    </div>
+                  )}
                   <div className="flex items-end gap-2">
                     <button className="p-2 hover:bg-gray-100 rounded transition-colors flex-shrink-0">
                       <Plus className="h-5 w-5 text-gray-500" />
@@ -2149,6 +2243,17 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                     <div className="flex-1 flex flex-col">
                       {/* Textarea */}
                       <div className="relative">
+                        {/* Тулбар форматирования для Discord DM */}
+                        {ticket.source === 'discord_dm' && (
+                          <div className="flex items-center gap-1 mb-2 pb-2 border-b border-gray-200">
+                            <button
+                              className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+                              title="Markdown Preview"
+                            >
+                              <span className="text-xs font-medium text-gray-600">MD</span>
+                            </button>
+                          </div>
+                        )}
                         <textarea
                           ref={messageTextareaRef}
                           placeholder={`Message ${ticket.channel}`}
@@ -2995,28 +3100,118 @@ export default function TicketView({ ticketId }: TicketViewProps) {
         >
           <div className="p-4">
             {/* Карточка пользователя */}
-            <div className="group flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors mb-6">
-              <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-medium text-gray-600">
-                  {ticket.username.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold text-gray-900 truncate">
-                  {ticket.username
-                    .split('_')
-                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' ')}
+            {ticket.source === 'discord_dm' && ticket.discordProfile ? (
+              // Discord Profile стиль
+              <div className="mb-6 bg-white rounded-lg border border-gray-200 overflow-hidden">
+                {/* Баннер */}
+                <div 
+                  className="h-20 w-full"
+                  style={{ 
+                    backgroundColor: ticket.discordProfile.bannerColor || '#7289da',
+                    backgroundImage: ticket.discordProfile.bannerUrl ? `url(${ticket.discordProfile.bannerUrl})` : 'none',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                />
+                {/* Аватар и основная информация */}
+                <div className="relative px-4 pb-4">
+                  {/* Аватар с обводкой */}
+                  <div className="relative -mt-10 mb-3">
+                    <div 
+                      className="h-20 w-20 rounded-full bg-white p-1 flex items-center justify-center border-4"
+                      style={{ borderColor: '#f8fafc' }}
+                    >
+                      <div className="h-full w-full rounded-full bg-gray-300 flex items-center justify-center">
+                        <span className="text-lg font-medium text-gray-600">
+                          {ticket.discordProfile.username.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      {/* Индикатор статуса */}
+                      <div 
+                        className={`absolute bottom-0 right-0 h-5 w-5 rounded-full border-4 border-white ${
+                          ticket.discordProfile.status === 'online' ? 'bg-green-500' : 'bg-gray-400'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  {/* Имя и Discord Tag */}
+                  <div className="mb-2">
+                    <div className="text-base font-bold text-gray-900">
+                      {ticket.discordProfile.username}
+                      {ticket.discordProfile.discriminator !== '0' && (
+                        <span className="text-sm font-normal text-gray-500">#{ticket.discordProfile.discriminator}</span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Бейджи ролей */}
+                  {ticket.discordProfile.badges && ticket.discordProfile.badges.length > 0 && (
+                    <div className="flex items-center gap-2 mb-3">
+                      {ticket.discordProfile.badges.map((badge, idx) => (
+                        <Tooltip key={idx} text={badge.name} asChild>
+                          <div 
+                            className="h-5 w-5 rounded-full flex items-center justify-center text-white text-xs"
+                            style={{ backgroundColor: badge.color }}
+                            title={badge.name}
+                          >
+                            {badge.icon === 'shield_blue' ? '🛡️' : badge.icon === 'bug_green' ? '🐛' : '⭐'}
+                          </div>
+                        </Tooltip>
+                      ))}
+                    </div>
+                  )}
+                  {/* Discord ID с кнопкой копирования */}
+                  <div className="group/item flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors mb-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-gray-500 mb-0.5">Discord ID</div>
+                      <div className="text-sm font-mono text-gray-900 truncate">{ticket.discordProfile.discordId}</div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(ticket.discordProfile!.discordId)
+                      }}
+                      className="opacity-0 group-hover/item:opacity-100 p-1.5 hover:bg-gray-200 rounded transition-all"
+                      title="Copy Discord ID"
+                    >
+                      <Copy className="h-3.5 w-3.5 text-gray-400" />
+                    </button>
+                  </div>
+                  {/* Registered */}
+                  <div className="p-2 bg-gray-50 rounded mb-2">
+                    <div className="text-xs text-gray-500 mb-0.5">Registered</div>
+                    <div className="text-sm text-gray-900">{ticket.discordProfile.registeredAt}</div>
+                  </div>
+                  {/* Joined Server */}
+                  <div className="p-2 bg-gray-50 rounded">
+                    <div className="text-xs text-gray-500 mb-0.5">Joined Server</div>
+                    <div className="text-sm text-gray-900">{ticket.discordProfile.joinedAt}</div>
+                  </div>
                 </div>
-                <div className="text-xs font-normal text-gray-500 truncate">@{ticket.username}</div>
               </div>
-              <button
-                className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-200 rounded transition-all"
-                title="Скопировать ID"
-              >
-                <Copy className="h-4 w-4 text-gray-400" />
-              </button>
-            </div>
+            ) : (
+              // Стандартный стиль
+              <div className="group flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors mb-6">
+                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-medium text-gray-600">
+                    {ticket.username.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold text-gray-900 truncate">
+                    {ticket.username
+                      .split('_')
+                      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                      .join(' ')}
+                  </div>
+                  <div className="text-xs font-normal text-gray-500 truncate">@{ticket.username}</div>
+                </div>
+                <button
+                  className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-gray-200 rounded transition-all"
+                  title="Скопировать ID"
+                >
+                  <Copy className="h-4 w-4 text-gray-400" />
+                </button>
+              </div>
+            )}
 
             {/* Секция "Свойства" */}
             <div className="mb-6">
@@ -3029,7 +3224,7 @@ export default function TicketView({ ticketId }: TicketViewProps) {
                   <div className="flex items-center gap-2">
                     {ticket.source && (
                       <>
-                        <SourceIcon className={`h-4 w-4 ${getSourceIconColor(ticket.source)}`} />
+                        {renderSourceIcon(ticket.source, `h-4 w-4 ${getSourceIconColor(ticket.source)}`)}
                         <span className="text-[13px] font-normal text-[#212121]" style={{ wordBreak: 'break-word', fontWeight: 400 }}>
                           {getSourceName(ticket.source, ticket.channel)}
                         </span>

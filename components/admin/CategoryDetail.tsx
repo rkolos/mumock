@@ -2,18 +2,17 @@
 
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Save, Trash2 } from 'lucide-react'
-import { mockCategories, Category, FormField, IntegrationConfig } from '../../data/categories'
+import { mockCategories, Category, IntegrationConfig, SourceType } from '../../data/categories'
 import { useState } from 'react'
 import GeneralTab from './CategorySettings/GeneralTab'
-import FormBuilderTab from './CategorySettings/FormBuilderTab'
-import IntegrationSettingsTab from './CategorySettings/IntegrationSettingsTab'
 import AccessRolesTab from './CategorySettings/AccessRolesTab'
 
 interface CategoryDetailProps {
   categoryId: string
+  integrationSourceType?: SourceType
 }
 
-type TabType = 'general' | 'form' | 'integration' | 'access'
+type TabType = 'general' | 'access'
 
 const getSourceBadge = (sourceType: string) => {
   switch (sourceType) {
@@ -49,7 +48,7 @@ const getSourceBadge = (sourceType: string) => {
   }
 }
 
-export default function CategoryDetail({ categoryId }: CategoryDetailProps) {
+export default function CategoryDetail({ categoryId, integrationSourceType }: CategoryDetailProps) {
   const router = useRouter()
   const originalCategory = mockCategories.find((c) => c.id === categoryId)
   
@@ -77,16 +76,48 @@ export default function CategoryDetail({ categoryId }: CategoryDetailProps) {
     setCategory({ ...category, ...updates })
   }
 
-  const handleFormFieldsChange = (fields: FormField[]) => {
-    setCategory({ ...category, formFields: fields })
-  }
-
   const handleAssignedRolesChange = (roles: string[]) => {
     setCategory({ ...category, assignedRoles: roles })
   }
 
-  const handleIntegrationConfigChange = (config: IntegrationConfig) => {
-    setCategory({ ...category, integration_config: config })
+  const handleIntegrationConfigChange = (config: IntegrationConfig, sourceType?: SourceType) => {
+    const targetSourceType = sourceType || category?.source_type
+    if (!targetSourceType || !category) return
+
+    // Если используется новая модель с integration_configs
+    if (category.integration_configs) {
+      setCategory({
+        ...category,
+        integration_configs: {
+          ...category.integration_configs,
+          [targetSourceType]: config,
+        },
+        // Обновляем основную integration_config если это основной source_type
+        integration_config: targetSourceType === category.source_type ? config : category.integration_config,
+      })
+    } else {
+      // Старая модель - просто обновляем integration_config
+      setCategory({ ...category, integration_config: config })
+    }
+  }
+
+  // Получаем конфигурацию для текущей интеграции
+  const getCurrentIntegrationConfig = (): IntegrationConfig => {
+    if (!category) return {}
+    const targetSourceType = integrationSourceType || category.source_type
+
+    // Если используется новая модель и есть конфигурация для этой интеграции
+    if (category.integration_configs && category.integration_configs[targetSourceType]) {
+      return category.integration_configs[targetSourceType]
+    }
+
+    // Если это основной source_type категории, используем основную конфигурацию
+    if (targetSourceType === category.source_type) {
+      return category.integration_config
+    }
+
+    // Иначе возвращаем пустую конфигурацию (для новой связи)
+    return {}
   }
 
   const handleSave = () => {
@@ -105,8 +136,6 @@ export default function CategoryDetail({ categoryId }: CategoryDetailProps) {
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'general', label: 'General' },
-    { id: 'form', label: 'Form Builder' },
-    { id: 'integration', label: 'Integration Settings' },
     { id: 'access', label: 'Access & Roles' },
   ]
 
@@ -187,15 +216,7 @@ export default function CategoryDetail({ categoryId }: CategoryDetailProps) {
                     : 'text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-300'
                 }`}
               >
-                {tab.id === 'integration'
-                  ? category.source_type === 'discord'
-                    ? 'Discord Settings'
-                    : category.source_type === 'web_widget'
-                    ? 'Widget Appearance'
-                    : category.source_type === 'telegram'
-                    ? 'Telegram Bot'
-                    : 'Integration Settings'
-                  : tab.label}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -207,18 +228,6 @@ export default function CategoryDetail({ categoryId }: CategoryDetailProps) {
         <div className="max-w-7xl mx-auto">
           {activeTab === 'general' && (
             <GeneralTab category={category} onCategoryChange={handleCategoryChange} />
-          )}
-          {activeTab === 'form' && (
-            <FormBuilderTab
-              category={category}
-              onFormFieldsChange={handleFormFieldsChange}
-            />
-          )}
-          {activeTab === 'integration' && (
-            <IntegrationSettingsTab
-              category={category}
-              onConfigChange={handleIntegrationConfigChange}
-            />
           )}
           {activeTab === 'access' && (
             <AccessRolesTab

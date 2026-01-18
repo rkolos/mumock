@@ -4,6 +4,14 @@ import { useState, useRef, useEffect } from 'react'
 import { X, Globe, Mail, MessageCircle, Send, Code } from 'lucide-react'
 import { mockTickets } from '../../data/tickets'
 
+// Компонент для иконки Discord DM (комбинация Discord + Mail)
+const DiscordDMSourceIcon = ({ className }: { className?: string }) => (
+  <div className="relative inline-flex items-center justify-center">
+    <MessageCircle className={className} />
+    <Mail className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 text-[#5865F2] bg-white rounded-full p-0.5" style={{ fontSize: '8px' }} />
+  </div>
+)
+
 interface TicketsFilterDropdownProps {
   isOpen: boolean
   onClose: () => void
@@ -68,6 +76,7 @@ export default function TicketsFilterDropdown({
     { source: 'web', label: 'Web', icon: Globe, iconColor: 'text-blue-500' },
     { source: 'email', label: 'Email', icon: Mail, iconColor: 'text-orange-400' },
     { source: 'discord', label: 'Discord', icon: MessageCircle, iconColor: 'text-[#5865F2]' },
+    { source: 'discord_dm', label: 'Discord DM Bot', icon: DiscordDMSourceIcon, iconColor: 'text-[#5865F2]' },
     { source: 'telegram', label: 'Telegram', icon: Send, iconColor: 'text-sky-400' },
     { source: 'api', label: 'API', icon: Code, iconColor: 'text-gray-500' },
   ]
@@ -334,7 +343,11 @@ export default function TicketsFilterDropdown({
                       className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                     />
                     <div className="flex items-center gap-2">
-                      <IconComponent className={`h-4 w-4 flex-shrink-0 ${sourceOption.iconColor}`} />
+                      {sourceOption.source === 'discord_dm' ? (
+                        <DiscordDMSourceIcon className={`h-4 w-4 flex-shrink-0 ${sourceOption.iconColor}`} />
+                      ) : (
+                        <IconComponent className={`h-4 w-4 flex-shrink-0 ${sourceOption.iconColor}`} />
+                      )}
                       <span className={`text-sm text-gray-900 ${isSelected ? 'font-semibold' : ''}`}>
                         {sourceOption.label}
                       </span>
