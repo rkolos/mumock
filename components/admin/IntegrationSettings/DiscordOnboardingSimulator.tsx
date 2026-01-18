@@ -144,40 +144,36 @@ export default function DiscordOnboardingSimulator({
 
           {/* Form Fields */}
           <div className="space-y-4 mb-4">
-            {formFields.length === 0 ? (
-              <p className="text-sm text-gray-400">Нет полей в форме</p>
-            ) : (
-              formFields.map((field) => {
-                const label = field.label || field.name
-                const placeholder = field.placeholder || `Введите ${label.toLowerCase()}`
-                const isTextarea = field.type === 'paragraph' || (!field.type && !field.short)
+            {formFields.map((field) => {
+              const label = field.label || field.name
+              const placeholder = field.placeholder || `Введите ${label.toLowerCase()}`
+              const isTextarea = field.type === 'paragraph' || (!field.type && !field.short)
 
-                return (
-                  <div key={field.id}>
-                    <label className="block text-xs font-medium text-gray-300 mb-1">
-                      {label} {field.required && <span className="text-red-400">*</span>}
-                    </label>
-                    {isTextarea ? (
-                      <textarea
-                        value={formData[field.id] || ''}
-                        onChange={(e) => handleFormDataChange(field.id, e.target.value)}
-                        className="w-full px-3 py-2 bg-[#202225] border border-[#18191C] rounded text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#5865F2]"
-                        rows={4}
-                        placeholder={placeholder}
-                      />
-                    ) : (
-                      <input
-                        type="text"
-                        value={formData[field.id] || ''}
-                        onChange={(e) => handleFormDataChange(field.id, e.target.value)}
-                        className="w-full px-3 py-2 bg-[#202225] border border-[#18191C] rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#5865F2]"
-                        placeholder={placeholder}
-                      />
-                    )}
-                  </div>
-                )
-              })
-            )}
+              return (
+                <div key={field.id}>
+                  <label className="block text-xs font-medium text-gray-300 mb-1">
+                    {label} {field.required && <span className="text-red-400">*</span>}
+                  </label>
+                  {isTextarea ? (
+                    <textarea
+                      value={formData[field.id] || ''}
+                      onChange={(e) => handleFormDataChange(field.id, e.target.value)}
+                      className="w-full px-3 py-2 bg-[#202225] border border-[#18191C] rounded text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#5865F2]"
+                      rows={4}
+                      placeholder={placeholder}
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={formData[field.id] || ''}
+                      onChange={(e) => handleFormDataChange(field.id, e.target.value)}
+                      className="w-full px-3 py-2 bg-[#202225] border border-[#18191C] rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#5865F2]"
+                      placeholder={placeholder}
+                    />
+                  )}
+                </div>
+              )
+            })}
           </div>
 
           {/* Modal Footer */}
@@ -248,7 +244,7 @@ export default function DiscordOnboardingSimulator({
             </div>
 
             {/* Form Data as Embed Fields - показываем все поля в формате "название: содержимое" */}
-            {formFields.length > 0 && Object.keys(formData).length > 0 && (
+            {formFields.length > 0 && Object.keys(formData).length > 0 ? (
               <div className="space-y-2">
                 {formFields.map((field) => {
                   const label = field.label || field.name
@@ -262,7 +258,11 @@ export default function DiscordOnboardingSimulator({
                   )
                 })}
               </div>
-            )}
+            ) : formFields.length === 0 ? (
+              <div className="text-sm text-gray-300">
+                Теперь вы можете написать текст обращения.
+              </div>
+            ) : null}
           </div>
 
           {/* Close Ticket Button */}
