@@ -43,6 +43,40 @@ interface SidebarProps {
   onLinkClick?: () => void
 }
 
+const systemMenuGroups = [
+  {
+    label: "Ticket Configuration",
+    icon: Sliders,
+    id: "group_tickets",
+    items: [
+      { name: "Categories", href: "/categories", icon: LayoutGrid },
+      { name: "Statuses", href: "/statuses", icon: ListChecks },
+      { name: "Tags", href: "/tags", icon: Tag },
+      { name: "Macros", href: "/macros", icon: Zap },
+    ]
+  },
+  {
+    label: "Organization",
+    icon: Building,
+    id: "group_org",
+    items: [
+      { name: "Members", href: "/members", icon: Users },
+      { name: "Roles", href: "/roles", icon: UserCheck },
+      { name: "Panels", href: "/panels", icon: ShieldCheck },
+      { name: "Knowledge Base", href: "/knowledge-base", icon: Brain },
+    ]
+  },
+  {
+    label: "System & Connections",
+    icon: LinkIcon,
+    id: "group_sys",
+    items: [
+      { name: "Integrations", href: "/integrations", icon: Puzzle },
+      { name: "Migration", href: "/migration", icon: ArrowLeftRight },
+    ]
+  }
+]
+
 export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -203,6 +237,15 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
     setTicketsExpanded(!ticketsExpanded)
   }
 
+  const navItems = {
+    main: [
+      { name: 'Tickets', href: '/', icon: UserCog },
+      { name: 'Suggestions', href: '/suggestions', icon: Lightbulb },
+      { name: 'Analytics', href: '/analytics', icon: BarChart2 },
+      { name: 'Bugs', href: '/bugs', icon: Bug },
+    ],
+  }
+
   // Обновляем текущий раздел при изменении pathname
   useEffect(() => {
     const sectionMap: Record<string, string> = {
@@ -262,49 +305,6 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
-
-  const navItems = {
-    main: [
-      { name: 'Tickets', href: '/', icon: UserCog },
-      { name: 'Suggestions', href: '/suggestions', icon: Lightbulb },
-      { name: 'Analytics', href: '/analytics', icon: BarChart2 },
-      { name: 'Bugs', href: '/bugs', icon: Bug },
-    ],
-  }
-
-  const systemMenuGroups = [
-    {
-      label: "Ticket Configuration",
-      icon: Sliders,
-      id: "group_tickets",
-      items: [
-        { name: "Categories", href: "/categories", icon: LayoutGrid },
-        { name: "Statuses", href: "/statuses", icon: ListChecks },
-        { name: "Tags", href: "/tags", icon: Tag },
-        { name: "Macros", href: "/macros", icon: Zap },
-      ]
-    },
-    {
-      label: "Organization",
-      icon: Building,
-      id: "group_org",
-      items: [
-        { name: "Members", href: "/members", icon: Users },
-        { name: "Roles", href: "/roles", icon: UserCheck },
-        { name: "Panels", href: "/panels", icon: ShieldCheck },
-        { name: "Knowledge Base", href: "/knowledge-base", icon: Brain },
-      ]
-    },
-    {
-      label: "System & Connections",
-      icon: LinkIcon,
-      id: "group_sys",
-      items: [
-        { name: "Integrations", href: "/integrations", icon: Puzzle },
-        { name: "Migration", href: "/migration", icon: ArrowLeftRight },
-      ]
-    }
-  ]
 
   const organizations = ['TEST', 'Production', 'Development']
   const [currentOrganization] = useState('TEST')
