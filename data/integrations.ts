@@ -70,6 +70,10 @@ export interface IntegrationSettings {
   
   // Post-Submission Flow (Discord)
   ticket_first_message?: string
+  
+  // Discord Stats Bot
+  discord_stats_company_token?: string
+  discord_stats_linked_servers?: string[] // массив guild_id
 }
 
 export const mockIntegrations: Integration[] = [
@@ -161,6 +165,19 @@ export const mockIntegrations: Integration[] = [
       telegram_bot_token: '',
       telegram_bot_username: '',
       default_welcome_command: '/start',
+    },
+  },
+  {
+    id: 'discord_stats_bot',
+    name: 'Discord Server Stats',
+    description: 'Live counters, welcome messages, and analytics tracking.',
+    logo: '/assets/logos/discord.svg',
+    isActive: false,
+    connectionStatus: 'not_configured',
+    configUrl: '/integrations/discord-stats',
+    settings: {
+      discord_stats_company_token: 'ninjatickets_v8a9s8d7f6e5c4b3a2',
+      discord_stats_linked_servers: ['888777666', '777666555'],
     },
   },
 ]

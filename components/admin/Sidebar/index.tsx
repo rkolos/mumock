@@ -27,6 +27,7 @@ import {
   UserX,
   Layers,
   Puzzle,
+  BarChart2,
 } from 'lucide-react'
 import { useWidget } from '../../../contexts/WidgetContext'
 import { useEffect, useState, useRef } from 'react'
@@ -183,6 +184,7 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       '/statuses': 'statuses',
       '/tags': 'tags',
       '/suggestions': 'suggestions',
+      '/analytics': 'analytics',
       '/bugs': 'bugs',
       '/categories': 'categories',
       '/knowledge-base': 'knowledge-base',
@@ -229,6 +231,7 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
     main: [
       { name: 'Tickets', href: '/', icon: UserCog },
       { name: 'Suggestions', href: '/suggestions', icon: Lightbulb },
+      { name: 'Analytics', href: '/analytics', icon: BarChart2 },
       { name: 'Bugs', href: '/bugs', icon: Bug },
     ],
     system: [

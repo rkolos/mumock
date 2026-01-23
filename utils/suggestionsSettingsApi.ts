@@ -77,9 +77,7 @@ export function getDefaultSuggestionsConfig(): SuggestionsConfig {
 }
 
 // Хранилище забаненных пользователей в памяти (симуляция сервера)
-let cachedBannedUsers: BannedUser[] = [...mockBannedUsers]
-
-/**
+let cachedBannedUsers: BannedUser[] = [...mockBannedUsers]/**
  * Загружает список забаненных пользователей
  * Lazy load - вызывается только при открытии вкладки "Banned Users"
  * @param search - поисковый запрос по username или ID
@@ -95,9 +93,7 @@ export async function fetchBannedUsers(
   // Симулируем задержку сети
   await new Promise((resolve) => setTimeout(resolve, 300))
 
-  let filteredUsers = [...cachedBannedUsers]
-
-  // Применяем поиск
+  let filteredUsers = [...cachedBannedUsers]  // Применяем поиск
   if (search && search.trim()) {
     const searchLower = search.toLowerCase().trim()
     filteredUsers = filteredUsers.filter(
