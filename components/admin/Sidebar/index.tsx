@@ -28,6 +28,9 @@ import {
   Layers,
   Puzzle,
   BarChart2,
+  Sliders,
+  Building,
+  Link as LinkIcon,
 } from 'lucide-react'
 import { useWidget } from '../../../contexts/WidgetContext'
 import { useEffect, useState, useRef } from 'react'
@@ -52,6 +55,13 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
   
   // Состояние раскрытия меню Tickets (загружается из localStorage)
   const [ticketsExpanded, setTicketsExpanded] = useState(false)
+
+  // Состояние раскрытия групп меню SYSTEM (загружается из localStorage)
+  const [systemGroupsExpanded, setSystemGroupsExpanded] = useState<Record<string, boolean>>({
+    group_tickets: false,
+    group_org: false,
+    group_sys: false,
+  })
   
   // Подсчет предложений в статусе New
   const newSuggestionsCount = mockSuggestions.filter(s => s.lifecycle.status === 'New').length
@@ -70,6 +80,15 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       if (savedTickets === 'true') {
         setTicketsExpanded(true)
       }
+      const savedSystemState = localStorage.getItem('sidebar_system_state')
+      if (savedSystemState) {
+        try {
+          const parsed = JSON.parse(savedSystemState)
+          setSystemGroupsExpanded(parsed)
+        } catch (e) {
+          // Игнорируем ошибки парсинга
+        }
+      }
     }
   }, [])
 
@@ -86,6 +105,13 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       localStorage.setItem('sidebar_tickets_expanded', String(ticketsExpanded))
     }
   }, [ticketsExpanded])
+
+  // Сохранение состояния раскрытия групп SYSTEM в localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sidebar_system_state', JSON.stringify(systemGroupsExpanded))
+    }
+  }, [systemGroupsExpanded])
 
   // Получение активного статуса из URL
   const activeStatusFromUrl = searchParams.get('status')
@@ -199,6 +225,16 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
     setCurrentSection(section)
   }, [pathname, setCurrentSection])
 
+  // Автоматическое раскрытие активной группы SYSTEM
+  useEffect(() => {
+    const activeGroup = systemMenuGroups.find(group => 
+      group.items.some(item => pathname === item.href || pathname.startsWith(item.href + '/'))
+    )
+    if (activeGroup) {
+      setSystemGroupsExpanded(prev => ({ ...prev, [activeGroup.id]: true }))
+    }
+  }, [pathname])
+
   const handleLinkClick = (e: React.MouseEvent) => {
     // Закрываем сайдбар на мобильных при клике на ссылку
     // На desktop sidebar всегда виден через CSS (lg:translate-x-0)
@@ -234,19 +270,41 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
       { name: 'Analytics', href: '/analytics', icon: BarChart2 },
       { name: 'Bugs', href: '/bugs', icon: Bug },
     ],
-    system: [
-      { name: 'Statuses', href: '/statuses', icon: ListChecks },
-      { name: 'Tags', href: '/tags', icon: Tag },
-      { name: 'Panels', href: '/panels', icon: ShieldCheck },
-      { name: 'Members', href: '/members', icon: Users },
-      { name: 'Roles', href: '/roles', icon: UserCheck },
-      { name: 'Integrations', href: '/integrations', icon: Puzzle },
-      { name: 'Categories', href: '/categories', icon: LayoutGrid },
-      { name: 'Knowledge Base', href: '/knowledge-base', icon: Brain },
-      { name: 'Macros', href: '/macros', icon: Zap },
-      { name: 'Migration', href: '/migration', icon: ArrowLeftRight },
-    ],
   }
+
+  const systemMenuGroups = [
+    {
+      label: "Ticket Configuration",
+      icon: Sliders,
+      id: "group_tickets",
+      items: [
+        { name: "Categories", href: "/categories", icon: LayoutGrid },
+        { name: "Statuses", href: "/statuses", icon: ListChecks },
+        { name: "Tags", href: "/tags", icon: Tag },
+        { name: "Macros", href: "/macros", icon: Zap },
+      ]
+    },
+    {
+      label: "Organization",
+      icon: Building,
+      id: "group_org",
+      items: [
+        { name: "Members", href: "/members", icon: Users },
+        { name: "Roles", href: "/roles", icon: UserCheck },
+        { name: "Panels", href: "/panels", icon: ShieldCheck },
+        { name: "Knowledge Base", href: "/knowledge-base", icon: Brain },
+      ]
+    },
+    {
+      label: "System & Connections",
+      icon: LinkIcon,
+      id: "group_sys",
+      items: [
+        { name: "Integrations", href: "/integrations", icon: Puzzle },
+        { name: "Migration", href: "/migration", icon: ArrowLeftRight },
+      ]
+    }
+  ]
 
   const organizations = ['TEST', 'Production', 'Development']
   const [currentOrganization] = useState('TEST')
@@ -545,27 +603,97 @@ export default function Sidebar({ isOpen, onToggle, onLinkClick }: SidebarProps)
               System
             </p>
             <div className="space-y-1">
-              {navItems.system.map((item) => {
-                const Icon = item.icon
-                const isActive = pathname === item.href
+              {systemMenuGroups.map((group) => {
+                const GroupIcon = group.icon
+                const isGroupExpanded = systemGroupsExpanded[group.id] || false
+                
+                // Проверяем, активен ли какой-либо пункт в группе
+                const hasActiveItem = group.items.some(item => 
+                  pathname === item.href || pathname.startsWith(item.href + '/')
+                )
+
+                // Обработчик клика по стрелке (только раскрытие/сворачивание)
+                const handleGroupToggleClick = (e: React.MouseEvent) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setSystemGroupsExpanded(prev => ({
+                    ...prev,
+                    [group.id]: !prev[group.id]
+                  }))
+                }
+
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={handleLinkClick}
-                    className={`
-                      flex items-center gap-3 px-3 py-2 rounded-md
+                  <div key={group.id} className="space-y-1">
+                    {/* Родительский элемент группы */}
+                    <div className={`
+                      flex items-center rounded-md
                       transition-colors
                       ${
-                        isActive
+                        hasActiveItem && !isGroupExpanded
                           ? 'bg-blue-600 text-white'
                           : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                       }
-                    `}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span>{item.name}</span>
-                  </Link>
+                    `}>
+                      {/* Main Area (клик - раскрытие/сворачивание) */}
+                      <button
+                        onClick={handleGroupToggleClick}
+                        className={`
+                          flex items-center gap-3 px-3 py-2 rounded-md flex-1
+                          transition-colors text-left
+                        `}
+                      >
+                        <GroupIcon className="h-5 w-5" />
+                        <span className="flex-1">{group.label}</span>
+                      </button>
+                      
+                      {/* Toggle Area (клик - только раскрытие/сворачивание) */}
+                      <button
+                        onClick={handleGroupToggleClick}
+                        className="flex items-center justify-center p-2 rounded-md hover:bg-slate-700 transition-colors min-w-[24px] min-h-[24px]"
+                        aria-label={isGroupExpanded ? 'Свернуть меню' : 'Развернуть меню'}
+                      >
+                        {isGroupExpanded ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Подменю пунктов группы */}
+                    {isGroupExpanded && (
+                      <div className="ml-4 space-y-1">
+                        {group.items.map((item) => {
+                          const ItemIcon = item.icon
+                          const isItemActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                          
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={handleLinkClick}
+                              className={`
+                                w-full flex items-center gap-2 px-3 py-2 rounded-md
+                                transition-colors text-left
+                                ${
+                                  isItemActive
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                                }
+                              `}
+                            >
+                              <ItemIcon className={`h-4 w-4 flex-shrink-0 ${
+                                isItemActive
+                                  ? 'text-white'
+                                  : 'text-slate-400'
+                              }`} />
+                              <span className="text-sm">{item.name}</span>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )
               })}
             </div>
